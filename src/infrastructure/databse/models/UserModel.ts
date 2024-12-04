@@ -11,7 +11,7 @@ const UserSchema = new mongoose.Schema({
     plan: { type: String,required:false }, 
   },
   role: { type: String, enum: ['admin', 'moderator', 'participant'], default: 'participant' },
-  verify_token:{type:String , required:false},
+  verificationToken:{type:String , required:false},
   verified:{type:Boolean , required:true , default:false},
 });
 ;
