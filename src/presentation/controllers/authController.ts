@@ -3,7 +3,8 @@ import { IUserAuth } from "../../interfaces/repositories/IUserAuth";
 import { User } from "../../entites/User";
 import { UserService } from "../../services/UserService";
 import { error } from "console";
-
+import { Token } from '../../external/Token';
+import { Mailer } from "../../external/Mailer";
 // const userService = new UserService();
 
 
@@ -12,6 +13,7 @@ export class authController{
     constructor(authService:IUserAuth){
         this.authService=authService
     }
+
     async onRegisterUser(req: Request, res: Response, next: NextFunction) {
   try {
     console.log('Received signup request body:', req.body);
@@ -25,7 +27,7 @@ export class authController{
           name: !name,
           email: !email,
           password: !password,
-          confirmpassword: !confirmpassword
+          confirmpassword: !confirmpassword,
         }
       });
     }
@@ -90,28 +92,96 @@ export class authController{
     }
 }
 
-  
+
+
+async onVerifyOTP(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ error: "Email and OTP are required" });
+    }
+
+    const isVerified = await this.authService.verifyOTP(email, otp);
+
+    if (!isVerified) {
+      return res.status(400).json({ error: "Invalid OTP or OTP expired" });
+    }
+
+    return res.json({ message: "OTP verified successfully" });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async onResendOTP(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    const newOTP = await this.authService.resendOTP(email);
+
+    // Send new OTP via email
+    const mailer = new Mailer();
+    await mailer.SendEmail(email, `Your new OTP is: ${newOTP}`);
+
+    return res.json({ message: "New OTP sent successfully" });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async onLoginUser(req: Request, res: Response, next: NextFunction) {
   try {
     const { email, password } = req.body;
-    console.log("email", email);
-    console.log("password", password);
+
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
     const user = await this.authService.loginUser(email, password);
-    return res.json({ success: true, message: "Login successful", user });
+    if (!user) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const tokenService = new Token();
+    const tokens = tokenService.generateTokens(user._id!);
+
+    // Set tokens in cookies
+    res.cookie("accessToken", tokens.accessToken, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    const { password: _, ...userWithoutPassword } = user;
+
+    return res.json({
+      success: true,
+      message: "Login successful",
+      user: {
+        ...userWithoutPassword,
+      },
+      tokens: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      },
+    });
   } catch (error) {
     console.error("Login error:", error);
     if (error instanceof Error) {
-      if (error.message === "User not found" || error.message === "Invalid credentials") {
-        return res.status(401).json({ error: error.message });
-      }
-      return res.status(500).json({ error: "An error occurred during login" });
-    } else {
-      return res.status(500).json({ error: "An unexpected error occurred" });
+      return res.status(500).json({ error: error.message });
     }
+    return res.status(500).json({ error: "An unexpected error occurred" });
   }
 }
+
 }

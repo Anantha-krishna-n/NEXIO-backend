@@ -30,6 +30,20 @@ router.post(
     await controller.onLoginUser(req, res, next);
   }
 );
+router.post(
+  "/verify-otp",
+  async (req: Request, res: Response, next: NextFunction) => {
+    await controller.onVerifyOTP(req, res, next);
+  }
+);
+
+router.post(
+  "/resend-otp",
+  async (req: Request, res: Response, next: NextFunction) => {
+    await controller.onResendOTP(req, res, next);
+  }
+);
+
 
 
 export default router;

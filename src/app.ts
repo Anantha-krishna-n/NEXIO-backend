@@ -16,6 +16,13 @@ app.use(cors())
 app.get('/', (req, res) => {
   res.send('Hello from Express!');
 });
+app.use(
+  cors({
+    origin: `${process.env.CLIENT_URL}`,
+    credentials: true,
+    exposedHeaders: ["set-cookie"],
+  })
+)
 app.use('/auth',authRoutes)
 
 

@@ -5,7 +5,8 @@ export interface User {
   email: string;
   password?: string;
   googleId?: string;
-  verificationToken?: string; 
+  otp?: string | null;
+  otpExpires?: Date | null;
   verified:boolean;
   subscription?:any
 }

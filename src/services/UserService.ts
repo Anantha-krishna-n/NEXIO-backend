@@ -3,50 +3,65 @@ import { UserRepository } from "../infrastructure/repositories/UserRepository";
 import bcrypt from "bcryptjs";
 import { IUserAuth } from "../interfaces/repositories/IUserAuth";
 import { IToken } from "../interfaces/repositories/IToken";
+import { IMailer } from "../interfaces/repositories/IMailer";
 import { User } from "../entites/User";
-import { User as UserModel } from "../infrastructure/databse/models/UserModel"; 
+import {  User as UserModel } from "../infrastructure/databse/models/UserModel"; 
+import { Token } from "../external/Token";
+import { Mailer } from "../external/Mailer";
+import { generateOTP } from '../presentation/utils/otpUtil';
+
+
 
 export class UserService implements IUserAuth {
   private userRepository: UserRepository;
+  private tokenService: Token;
+  
 
   constructor(userRepository: UserRepository) {
     this.userRepository = userRepository;
-  }
-
-  
-  async registerUser(name: string, email: string, password: string): Promise<User | null> {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await this.userRepository.create({ name, email, password: hashedPassword });
-    return user;
+    this.tokenService = new Token();
+    
   }
 
   async findUserByEmail(email: string): Promise<User | null> {
-    const user = await this.userRepository.findByEmail(email);
-    return user;
+    return this.userRepository.findByEmail(email);
   }
 
-  async loginUser(email: string, password: string): Promise<User | null> {
+  async generateOTP(email: string): Promise<string> {
+    const otp = generateOTP();
+    const otpExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+    await this.userRepository.updateUser(email, { otp, otpExpires });
+    return otp;
+  }
+
+  async verifyOTP(email: string, otp: string): Promise<boolean> {
     const user = await this.findUserByEmail(email);
-    if (!user) {
-      throw new Error("User not found");
+    if (!user || !user.otp || !user.otpExpires) {
+      return false;
     }
-
-    if (!user.password) {
-      throw new Error("Password not set for this user");
+    if (user.otp !== otp || user.otpExpires < new Date()) {
+      return false;
     }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new Error("Invalid credentials");
-    }
-
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET!, { expiresIn: "1d" });
-
-    const { password: _, ...userWithoutPassword } = user;
-    return { ...userWithoutPassword, token } as User;
+    await this.userRepository.updateUser(email, { verified: true, otp: null, otpExpires: null });
+    return true;
   }
 
-  async verifyUser(email: string): Promise<User | null> {
+  async resendOTP(email: string): Promise<string> {
+    return this.generateOTP(email);
+  }
+
+  async registerUser(name: string, email: string, password: string): Promise<User | null> {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await this.userRepository.create({ name, email, password: hashedPassword, verified: false });
+    const otp = await this.generateOTP(email);
+
+    // Send OTP via email
+    const mailer = new Mailer();
+    await mailer.SendEmail(email, `Your OTP is: ${otp}`);
+
+    return user;
+  } 
+ async verifyUser(email: string): Promise<User | null> {
     const user = await this.findUserByEmail(email);
     if (!user) {
       throw new Error("User not found");
@@ -59,5 +74,16 @@ export class UserService implements IUserAuth {
     const updatedUser = await this.userRepository.updateUser(email, { verified: true });
     return updatedUser;
   }
-  
+  async loginUser(email: string, password: string): Promise<User | null> {
+    const user = await this.findUserByEmail(email);
+    if (!user) {
+      return null;
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password || '');
+    if (!isPasswordValid) {
+      return null;
+    }
+    return user;
+  }
 }
