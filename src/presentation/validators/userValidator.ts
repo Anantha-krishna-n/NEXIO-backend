@@ -1,7 +1,6 @@
 import {z} from "zod"
 import {User} from "../../entites/User"
 
-
 export const userSchema=z.object({
     name: z
     .string()

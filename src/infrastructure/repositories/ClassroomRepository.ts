@@ -1,4 +1,4 @@
-import { Classroom } from "../../entites/classRoom";
+import { Classroom } from "../../entites/classroom";
 import { ClassroomModel } from "../databse/models/ClassroomModel";
 import { IClassroomRepository } from "../../interfaces/repositories/IClassroomRepository";
 import { Types } from "mongoose";

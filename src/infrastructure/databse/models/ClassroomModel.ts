@@ -1,5 +1,5 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import { Classroom } from '../../../entites/classRoom';
+import { Classroom } from '../../../entites/classroom';
 
 const ClassroomSchema = new Schema<Classroom>({
     title: { type: String, required: true },

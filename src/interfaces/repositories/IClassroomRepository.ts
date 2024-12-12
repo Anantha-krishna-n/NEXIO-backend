@@ -1,4 +1,4 @@
-import { Classroom } from "../../entites/classRoom";
+import { Classroom } from "../../entites/classroom";
 import { Types } from "mongoose";
 
 export interface IClassroomRepository {

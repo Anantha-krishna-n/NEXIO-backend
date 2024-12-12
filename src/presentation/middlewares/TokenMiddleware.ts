@@ -19,6 +19,7 @@ export const refreshTokenHandler = async (req: Request, res: Response, next: Nex
       secure:true,
       maxAge: 15 * 60 * 1000,
     });
+    return next()
 
     return res.json({ success: true, message: "Access token refreshed" });
   } catch (error) {

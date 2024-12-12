@@ -1,5 +1,5 @@
 import { ClassroomRepository } from "../infrastructure/repositories/ClassroomRepository";
-import { Classroom } from "../entites/classRoom";
+import { Classroom } from "../entites/classroom";
 import { Types } from "mongoose";
 
 export class ClassroomService{
@@ -25,8 +25,8 @@ export class ClassroomService{
             title: name,
             description,
             schedule,
-            type: isPublic ? 'public' : 'private', // Use correct type
-            admin: new Types.ObjectId(adminId), // Ensure it's an ObjectId
+            type: isPublic ? 'public' : 'private', 
+            admin: new Types.ObjectId(adminId), 
           };
           
     
