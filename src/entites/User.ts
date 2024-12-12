@@ -1,6 +1,5 @@
 export interface User {
-  id?: string;
-  _id?: string;
+  _id: string;
   name: string;
   email: string;
   password?: string;
@@ -8,5 +7,6 @@ export interface User {
   otp?: string | null;
   otpExpires?: Date | null;
   verified:boolean;
+  createdAt?:Date;
   subscription?:any
 }

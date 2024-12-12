@@ -12,4 +12,13 @@ export class UserRepository implements IUserRepository {
   async updateUser(email: string, updateData: Partial<User>): Promise<User | null> {
     return await UserModel.findOneAndUpdate({ email }, updateData, { new: true });
   }
+  async deleteUser(email: string): Promise<void> {
+    await UserModel.findOneAndDelete({ email });
+  }
+  async findUnverifiedUsersBefore(date: Date): Promise<User[]> {
+    return await UserModel.find({
+      verified: false,
+      createdAt: { $lt: date }
+    });
+  }
 }

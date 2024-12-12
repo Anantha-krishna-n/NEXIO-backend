@@ -6,5 +6,8 @@ export interface IUserRepository {
     findByEmail(email: string): Promise<User | null>;
     // findByGoogleId(googleId: string): Promise<User | null>;
     updateUser(email: string, updateData: Partial<User>): Promise<User | null>;
+    deleteUser(email: string): Promise<void>;
+    findUnverifiedUsersBefore(date: Date): Promise<User[]>;
+
   }
   

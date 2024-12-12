@@ -2,7 +2,7 @@ import express, { NextFunction, Request, Response } from "express"
 import {authController} from "../controllers/authController"
 import { UserRepository } from "../../infrastructure/repositories/UserRepository"
 import { UserService } from "../../services/UserService"
-
+import {refreshTokenHandler } from "../middlewares/TokenMiddleware"
 
 const repository = new UserRepository()
 const auth = new UserService(repository)
@@ -25,15 +25,9 @@ router.post(
   }
 );
 router.post(
-  "/login",
+  "/verify",
   async (req: Request, res: Response, next: NextFunction) => {
-    await controller.onLoginUser(req, res, next);
-  }
-);
-router.post(
-  "/verify-otp",
-  async (req: Request, res: Response, next: NextFunction) => {
-    await controller.onVerifyOTP(req, res, next);
+    await controller.onVerifyUser(req, res, next);
   }
 );
 
@@ -43,7 +37,20 @@ router.post(
     await controller.onResendOTP(req, res, next);
   }
 );
-
+router.post(
+  "/login",
+  async (req: Request, res: Response, next: NextFunction) => {
+    await controller.onLoginUser(req, res, next);
+  }
+);
+router.post(
+  "/logout",
+  async (req: Request, res: Response, next: NextFunction) => {
+    await controller.onLogoutUser(req, res, next);
+  }
+);
 
 
 export default router;
+
+

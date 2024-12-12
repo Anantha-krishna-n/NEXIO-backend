@@ -1,8 +1,9 @@
 import { IMailer } from "../interfaces/repositories/IMailer";
 import nodemailer from "nodemailer"
+import { generateEmailTemplate } from "../presentation/utils/emailTemplate";
 
 export class Mailer implements IMailer {
-    async SendEmail(to: string, data: any) {
+    async SendEmail(to: string, otp: string) {
       const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
         port: 465,
@@ -12,14 +13,15 @@ export class Mailer implements IMailer {
           pass: process.env.SMTP_KEY,
         }, 
       })
+      const htmlContent = generateEmailTemplate(otp);
       async function main() {
         let res = await transporter.sendMail({
           from: "NEXIO<nexiocollab3533@gmail.com>",
           to: `${to}`,
           subject: "Email for verification",
-          html: data,
+          html: htmlContent,
         })
-        console.log("Message sent:", res);
+        console.log(`Email sent to ${to}`);
       }
       main().catch(console.error)
       return true
