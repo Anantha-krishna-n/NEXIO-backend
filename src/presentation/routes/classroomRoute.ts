@@ -10,3 +10,8 @@ const classroom=new ClassroomService(repository)
 const controller=new ClassroomController(classroom)
 const router = express.Router() 
 
+router.post('/createroom',controller.createClassroom.bind(controller))
+router.get('/public', controller.getPublicClassrooms.bind(controller))
+
+  
+  export default router;

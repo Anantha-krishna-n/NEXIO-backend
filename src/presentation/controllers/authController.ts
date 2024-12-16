@@ -113,7 +113,7 @@ export class authController {
       }
 
       const user = await this.authService.loginUser(email, password);
-      console.log("controller user", user);
+      console.log("controller user", user?._id);
       if (!user) {
         return res.status(401).json({ error: "Invalid credentials" });
       }

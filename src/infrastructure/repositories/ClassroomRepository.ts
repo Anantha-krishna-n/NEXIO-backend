@@ -4,7 +4,13 @@ import { IClassroomRepository } from "../../interfaces/repositories/IClassroomRe
 import { Types } from "mongoose";
 
 export class ClassroomRepository implements IClassroomRepository {
-    async create(classroomData: Partial<Classroom>): Promise<Classroom> {
-      return await ClassroomModel.create(classroomData);
-    }
+  async create(classroomData: Partial<Classroom>): Promise<Classroom> {
+    const classroom = new ClassroomModel(classroomData);
+    await classroom.save();
+    return classroom.toObject();
   }
+  async getPublicClassrooms(): Promise<Classroom[]> {
+    const publicClassrooms = await ClassroomModel.find({ type: 'public' }).lean();
+    return publicClassrooms;
+  }
+}

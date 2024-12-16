@@ -10,31 +10,33 @@ export class ClassroomService{
       }
 
       async createClassroom(
-        name: string,
+        title: string,
         description: string,
         date: Date,
         time: string,
-        isPublic: boolean,
+        type: 'public' | 'private',
         adminId: string
       ): Promise<Classroom> {
         const schedule = new Date(date);
-        const [hours, minutes] = time.split(':').map(Number);
-        schedule.setHours(hours, minutes);
+        const [hours, minutes] = time.split(':');
+        schedule.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+    
+        const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     
         const classroomData: Partial<Classroom> = {
-            title: name,
-            description,
-            schedule,
-            type: isPublic ? 'public' : 'private', 
-            admin: new Types.ObjectId(adminId), 
-          };
-          
+          title,
+          description,
+          type,
+          schedule,
+          inviteCode,
+          members: [{ user: new Types.ObjectId(adminId), role: 'admin' }],
+          admin: new Types.ObjectId(adminId),
+          createdAt: new Date()
+        };
     
-        const classroom = await this.classroomRepository.create(classroomData);
-        return classroom;
+        return await this.classroomRepository.create(classroomData);
       }
-
-
-
-
+      async getPublicClassrooms(): Promise<Classroom[]> {
+        return await this.classroomRepository.getPublicClassrooms();
+      }
 }
