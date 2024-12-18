@@ -29,7 +29,7 @@ export class ClassroomService{
           type,
           schedule,
           inviteCode,
-          members: [{ user: new Types.ObjectId(adminId), role: 'admin' }],
+          members: [],
           admin: new Types.ObjectId(adminId),
           createdAt: new Date()
         };
@@ -39,4 +39,21 @@ export class ClassroomService{
       async getPublicClassrooms(): Promise<Classroom[]> {
         return await this.classroomRepository.getPublicClassrooms();
       }
+
+      async joinClassroom(classroomId: string, userId: string): Promise<Classroom> {
+        const classroom = await this.classroomRepository.getById(classroomId);
+        if (!classroom) {
+            throw new Error("Classroom not found.");
+        }
+    
+        // Ensure no duplicate users are added to the classroom
+        const isUserMember = classroom.members.some(member => member.user.toString() === userId);
+        if (isUserMember) {
+            throw new Error("User is already a member of the classroom.");
+        }
+    
+        // Add user to classroom through repository logic
+        return await this.classroomRepository.addMember(classroomId, userId);
+    }
+    
 }

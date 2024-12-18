@@ -141,6 +141,7 @@ export class authController {
           _id:user._id,
           name:user.name,
           email: user.email,
+          profilepic:user.profilepic,
           subscription:user.subscription || null,
         },
         tokens,

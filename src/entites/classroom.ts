@@ -15,6 +15,7 @@ interface ClassroomMember {
     members: ClassroomMember[];
     inviteCode: string;
     createdAt: Date;
-    admin: Types.ObjectId; 
+    admin: Types.ObjectId | User;
 
   }
+  

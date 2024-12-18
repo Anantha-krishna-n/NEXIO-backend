@@ -12,18 +12,11 @@ export class ClassroomController {
 
   async createClassroom(req: Request, res: Response) {
     try {
-      const token=req.cookies?.accessToken
-      if (!token) {
-        return res.status(401).json({ error: "Access token is missing" });
-    }
-        const decoded=jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
-        console.log(decoded,"token")
-      
-      console.log("entered into controller")
+ 
       const { title, description, date, time, type } = req.body;
-      const adminId = decoded.userId;
+      const adminId = req.userId;
       console.log(adminId,"adminId ")//this is the userId of the user who logged in and create the room
-
+      
       if (!title || !date || !time) {
         return res.status(400).json({ error: "Name, date, and time are required" });
       }
@@ -34,7 +27,7 @@ export class ClassroomController {
         new Date(date),
         time,
         type,
-        adminId.toString()
+        adminId as string
       );
       console.log("classroom",classroom)
       res.status(201).json(classroom);
@@ -50,5 +43,25 @@ export class ClassroomController {
       res.status(500).json({ error: "Failed to fetch public classrooms" });
     }
   }
+  async joinClassroom(req: Request, res: Response) {
+    try {
+        const { classroomId } = req.params;
+        const userId = req.userId; // Extracted from middleware
+
+        if (!classroomId || !userId) {
+            return res.status(400).json({ error: "Classroom ID and User ID are required." });
+        }
+
+        // Attempt to join the classroom
+        const updatedClassroom = await this.classroomService.joinClassroom(classroomId, userId);
+
+        res.status(200).json({ message: "Successfully joined classroom", classroom: updatedClassroom });
+    } catch (error) {
+        const err = error as Error;
+        res.status(500).json({ error: err.message || "Failed to join classroom." });
+    }
+}
+
+  
 }
 

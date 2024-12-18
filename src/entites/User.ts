@@ -3,6 +3,7 @@ export interface User {
   name: string;
   email: string;
   password?: string;
+  profilepic?:string;
   googleId?: string;
   otp?: string | null;
   otpExpires?: Date | null;
