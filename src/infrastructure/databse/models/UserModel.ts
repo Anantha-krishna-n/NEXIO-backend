@@ -16,8 +16,8 @@ const UserSchema = new mongoose.Schema({
   otp: { type: String },
   otpExpires: { type: Date },
   verified:{type:Boolean , required:true , default:false},
+  isBlocked:{type:Boolean,required:true,default:true},
 });
 ;
-
 
 export const User: Model<any> = mongoose.model('User', UserSchema);

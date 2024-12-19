@@ -5,8 +5,9 @@ import cors from "cors"
 import cookieParser from "cookie-parser"
 import { connectToDatabase } from "./infrastructure/databse/connection-config"
 import authRoutes from "./presentation/routes/authRoutes"
-// import clssRoutes
+import adminRoutes from "./presentation/routes/adminRoutes"
 import classroomRoute from "./presentation/routes/classroomRoute"
+
 import { cleanupUnverifiedUsers } from "./presentation/utils/cleanupUnverifiedUsers";
 import cron from "node-cron";
 
@@ -37,6 +38,10 @@ cron.schedule("0 0 * * *", async () => {
 
 app.use('/auth',authRoutes)
 app.use('/classroom',classroomRoute)
+
+
+
+app.use("/admin", adminRoutes);
 
 const port= process.env.PORT || 5000
 

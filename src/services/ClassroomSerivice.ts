@@ -40,20 +40,28 @@ export class ClassroomService{
         return await this.classroomRepository.getPublicClassrooms();
       }
 
-      async joinClassroom(classroomId: string, userId: string): Promise<Classroom> {
+      async getClassroomById(classroomId: string): Promise<Classroom | null> {
+        return await this.classroomRepository.getById(classroomId);
+      }
+      async joinClassroom(classroomId: string, userId: string): Promise<Classroom | boolean> {
         const classroom = await this.classroomRepository.getById(classroomId);
         if (!classroom) {
             throw new Error("Classroom not found.");
         }
     
         // Ensure no duplicate users are added to the classroom
-        const isUserMember = classroom.members.some(member => member.user.toString() === userId);
-        if (isUserMember) {
-            throw new Error("User is already a member of the classroom.");
+        const isUserMember = classroom.members.some(member => 
+          member.user._id.toString() === userId.toString()
+      );
+      
+           console.log('////////',isUserMember);
+
+        if (!isUserMember) {
+
+          return await this.classroomRepository.addMember(classroomId, userId);
+
         }
-    
-        // Add user to classroom through repository logic
-        return await this.classroomRepository.addMember(classroomId, userId);
+    return true
+        
     }
-    
 }

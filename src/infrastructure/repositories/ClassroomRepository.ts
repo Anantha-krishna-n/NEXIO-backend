@@ -19,7 +19,10 @@ export class ClassroomRepository implements IClassroomRepository {
     return publicClassrooms;
   }
   async getById(classroomId: string): Promise<Classroom | null> {
-    return await ClassroomModel.findById(classroomId).populate('members.user').lean();
+    return await ClassroomModel.findById(classroomId)
+      .populate('admin', 'name email profile')
+      .populate('members.user', 'name email profile')
+      .lean();
   }
   async addMember(classroomId: string, userId: string): Promise<Classroom> {
     const classroom = await ClassroomModel.findById(classroomId);
@@ -27,11 +30,6 @@ export class ClassroomRepository implements IClassroomRepository {
         throw new Error("Classroom not found.");
     }
 
-    // Check if the user is already in the members list
-    const existingMember = classroom.members.find(member => member.user.toString() === userId);
-    if (existingMember) {
-        throw new Error("User is already a member of this classroom.");
-    }
 
     // Check if the user is the admin of the classroom
     const isAdmin = classroom.admin.toString() === userId;
@@ -48,5 +46,7 @@ export class ClassroomRepository implements IClassroomRepository {
     await classroom.save();
     return classroom.toObject();
 }
-
 }
+
+
+

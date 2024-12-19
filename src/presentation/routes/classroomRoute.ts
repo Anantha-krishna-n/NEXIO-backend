@@ -15,6 +15,7 @@ router.post('/createroom',refreshTokenHandler,controller.createClassroom.bind(co
 router.get('/public', controller.getPublicClassrooms.bind(controller))
 
 router.post('/joinClassroom/:classroomId', refreshTokenHandler, controller.joinClassroom.bind(controller));
+router.get('/:classroomId', refreshTokenHandler, controller.getClassroomById.bind(controller));
 
   
   export default router;

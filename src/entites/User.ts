@@ -8,6 +8,7 @@ export interface User {
   otp?: string | null;
   otpExpires?: Date | null;
   verified:boolean;
+  isBlocked?:boolean;
   createdAt?:Date;
   subscription?:any
 }

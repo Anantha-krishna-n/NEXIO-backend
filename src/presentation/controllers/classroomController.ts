@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import { ClassroomService } from "../../services/ClassroomSerivice";
 import jwt from "jsonwebtoken";
+import { error } from "console";
 
 export class ClassroomController {
   private classroomService: ClassroomService;
@@ -15,7 +16,7 @@ export class ClassroomController {
  
       const { title, description, date, time, type } = req.body;
       const adminId = req.userId;
-      console.log(adminId,"adminId ")//this is the userId of the user who logged in and create the room
+      console.log(adminId,"adminId ")
       
       if (!title || !date || !time) {
         return res.status(400).json({ error: "Name, date, and time are required" });
@@ -43,6 +44,7 @@ export class ClassroomController {
       res.status(500).json({ error: "Failed to fetch public classrooms" });
     }
   }
+ 
   async joinClassroom(req: Request, res: Response) {
     try {
         const { classroomId } = req.params;
@@ -60,6 +62,24 @@ export class ClassroomController {
         const err = error as Error;
         res.status(500).json({ error: err.message || "Failed to join classroom." });
     }
+}
+
+
+async getClassroomById(req: Request, res: Response): Promise<void> {
+  try {
+    const { classroomId } = req.params;
+
+    const classroom = await this.classroomService.getClassroomById(classroomId);
+    if (!classroom) {
+      res.status(404).json({ message: "Classroom not found." });
+      return;
+    }
+
+    res.status(200).json({ message: "Classroom fetched successfully.", classroom });
+  } catch (error) {
+    const err = error as Error
+    res.status(500).json({ message: "Failed to fetch classroom.", error: err.message });
+  }
 }
 
   
