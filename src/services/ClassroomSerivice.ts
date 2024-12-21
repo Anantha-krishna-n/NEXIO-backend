@@ -1,14 +1,13 @@
 import { ClassroomRepository } from "../infrastructure/repositories/ClassroomRepository";
+import { IClassroomRepository } from "../interfaces/repositories/IClassroomRepository";
 import { Classroom } from "../entites/classroom";
 import { Types } from "mongoose";
 
 export class ClassroomService{
     private classroomRepository: ClassroomRepository
-
     constructor(classroomRepository: ClassroomRepository) {
         this.classroomRepository = classroomRepository;
       }
-
       async createClassroom(
         title: string,
         description: string,
@@ -55,9 +54,8 @@ export class ClassroomService{
       );
       
            console.log('////////',isUserMember);
-
+           
         if (!isUserMember) {
-
           return await this.classroomRepository.addMember(classroomId, userId);
 
         }

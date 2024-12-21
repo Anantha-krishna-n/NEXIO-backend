@@ -7,4 +7,6 @@ export interface IUserAuth {
     verifyUser(email: string,otp:string): Promise<User | null>;
     generateOTP(email: string): Promise<string>;
     resendOTP(email: string): Promise<string>;
+    findUserById(userId: string): Promise<User | null>; // Added this line
+    
   }

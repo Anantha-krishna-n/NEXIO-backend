@@ -21,4 +21,21 @@ export class UserRepository implements IUserRepository {
       createdAt: { $lt: date }
     });
   }
+  async findById(userId: string): Promise<User | null> { 
+    return await UserModel.findById(userId);
+  }
+  async toggleBlockStatus(userId: string, isBlocked: boolean): Promise<User | null> {
+    return await UserModel.findByIdAndUpdate(
+      userId,
+      { isBlocked },
+      { new: true }
+    );
+  }
+  async getAllUsers(page: number, limit: number): Promise<{ users: User[]; total: number }> {
+    console.log("dsfd")
+    const skip = (page - 1) * limit;
+    const users = await UserModel.find().skip(skip).limit(limit);
+    const total = await UserModel.countDocuments();
+    return { users, total };
+  }
 }

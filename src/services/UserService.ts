@@ -104,5 +104,13 @@ export class UserService implements IUserAuth {
       await this.userRepository.deleteUser(email);
     }
   }
+  async findUserById(userId: string): Promise<User | null> { // Implemented here
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
+  }
+  
 }
 

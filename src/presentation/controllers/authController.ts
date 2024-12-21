@@ -172,5 +172,14 @@ export class authController {
       return res.status(500).json({ error: "An unexpected error occurred during logout" });
     }
   }
-  
+ async getUserById(req: Request, res: Response) {
+    const { userId } = req.params;
+    try {
+      const user = await this.authService.findUserById(userId); // Call updated method
+      res.status(200).json(user);
+    } catch (error) {
+      const err = error as Error;
+      res.status(400).json({ error: err.message });
+    }
+  } 
 }
