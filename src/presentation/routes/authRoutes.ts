@@ -3,6 +3,7 @@ import {authController} from "../controllers/authController"
 import { UserRepository } from "../../infrastructure/repositories/UserRepository"
 import { UserService } from "../../services/UserService"
 import {refreshTokenHandler } from "../middlewares/TokenMiddleware"
+import {checkIfBlocked} from "../middlewares/userValidate"
 
 const repository = new UserRepository()
 const auth = new UserService(repository)

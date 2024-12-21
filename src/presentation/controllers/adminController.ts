@@ -51,26 +51,32 @@ export class adminController{
     }
     async toggleUserBlockStatus(req: Request, res: Response) {
       try {
-        console.log("enter the block controlelr")
-        const userId = req.params.id;
-        const { isBlocked } = req.body;
+          const userId = req.params.id;
+          const { isBlocked } = req.body;
   
-        if (typeof isBlocked !== "boolean") {
-          return res.status(400).json({ error: "Invalid 'isBlocked' value" });
-        }
+          // Validate userId
+          if (!userId) {
+              return res.status(400).json({ error: "User ID is required" });
+          }
   
-        const updatedUser = await userRepository.toggleBlockStatus(userId, isBlocked);
+          // Check if user exists
+          const existingUser = await userRepository.findById(userId);
+          if (!existingUser) {
+              return res.status(404).json({ error: "User not found" });
+          }
   
-        if (!updatedUser) {
-          return res.status(404).json({ error: "User not found" });
-        }
+          // Toggle block status
+          const updatedUser = await userRepository.toggleBlockStatus(userId, isBlocked);
   
-        res.status(200).json({
-          message: `User has been ${isBlocked ? "blocked" : "unblocked"}`,
-          user: updatedUser,
-        });
+          // Send response
+          res.status(200).json({
+              message: `User has been ${isBlocked ? "blocked" : "unblocked"} successfully`,
+              user: updatedUser,
+          });
+  
       } catch (error) {
-        res.status(500).json({ error: "Failed to update user status" });
+          console.error("Error in toggleUserBlockStatus:", error);
+          res.status(500).json({ error: "Failed to update user status" });
       }
-    }
+  }
 }

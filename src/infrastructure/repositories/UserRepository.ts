@@ -25,12 +25,18 @@ export class UserRepository implements IUserRepository {
     return await UserModel.findById(userId);
   }
   async toggleBlockStatus(userId: string, isBlocked: boolean): Promise<User | null> {
-    return await UserModel.findByIdAndUpdate(
-      userId,
-      { isBlocked },
-      { new: true }
-    );
-  }
+    try {
+        const updatedUser = await UserModel.findByIdAndUpdate(
+            userId,
+            { $set: { isBlocked: isBlocked } },
+            { new: true }
+        );
+        return updatedUser;
+    } catch (error) {
+        console.error("Error in toggleBlockStatus:", error);
+        throw error;
+    }
+}
   async getAllUsers(page: number, limit: number): Promise<{ users: User[]; total: number }> {
     console.log("dsfd")
     const skip = (page - 1) * limit;
