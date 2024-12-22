@@ -13,7 +13,7 @@ export class ClassroomController {
 
   async createClassroom(req: Request, res: Response) {
     try {
- 
+    console.log("Entered into classroom")
       const { title, description, date, time, type } = req.body;
       const adminId = req.userId;
       console.log(adminId,"adminId ")

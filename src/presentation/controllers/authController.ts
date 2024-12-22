@@ -116,8 +116,11 @@ export class authController {
       console.log("controller user", user?._id);
       if (!user) {
         return res.status(401).json({ error: "Invalid credentials" });
-      }
-
+      }  
+      
+      if (user.isBlocked) {
+        return res.status(403).json({ error: "Access denied: Your account has been blocked. Please contact support for assistance." });
+      } 
       const tokens = this.tokenService.generateTokens(user._id);
       res.cookie("accessToken", tokens.accessToken, {
         httpOnly: true,
@@ -142,6 +145,7 @@ export class authController {
           name:user.name,
           email: user.email,
           profilepic:user.profilepic,
+          createdAt:user.createdAt,
           subscription:user.subscription || null,
         },
         tokens,
