@@ -24,6 +24,10 @@ export class UserRepository implements IUserRepository {
   async findById(userId: string): Promise<User | null> { 
     return await UserModel.findById(userId);
   }
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    return await UserModel.findOne({ googleId });
+  }
+  
   async toggleBlockStatus(userId: string, isBlocked: boolean): Promise<User | null> {
     try {
         const updatedUser = await UserModel.findByIdAndUpdate(
@@ -44,4 +48,36 @@ export class UserRepository implements IUserRepository {
     const total = await UserModel.countDocuments();
     return { users, total };
   }
+
+  async createOrUpdateGoogleUser(profile: any): Promise<User> {
+    console.log("Google profile received:", profile);
+  
+    const existingUser = await UserModel.findOne({ googleId: profile.id });
+  
+    if (existingUser) {
+      return existingUser;
+    } else {
+      const userByEmail = await UserModel.findOne({
+        email: profile.emails[0].value,
+      });
+  
+      if (userByEmail) {
+        userByEmail.googleId = profile.id;
+        await userByEmail.save();
+        return userByEmail;
+      } else {
+        const newUser = new UserModel({
+          name: profile.displayName,
+          email: profile.emails[0].value,
+          googleId: profile.id,
+          profile: profile.photos[0].value,
+          verified: true,
+        });
+  
+        await newUser.save();
+        return newUser;
+      }
+    }
+  }
+  
 }

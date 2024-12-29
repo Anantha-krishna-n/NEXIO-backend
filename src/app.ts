@@ -1,7 +1,11 @@
-import express,{Application} from "express"
 import dotenv from "dotenv"
+dotenv.config()
+import express,{Application} from "express"
 import mongoose from "mongoose"
 import cors from "cors"
+import passport from "passport";
+import session from "express-session";
+import "./config/passport"
 import cookieParser from "cookie-parser"
 import { connectToDatabase } from "./infrastructure/databse/connection-config"
 import authRoutes from "./presentation/routes/authRoutes"
@@ -12,7 +16,7 @@ import { cleanupUnverifiedUsers } from "./presentation/utils/cleanupUnverifiedUs
 import cron from "node-cron";
 
 
-dotenv.config()
+
 
 const app = express()
 app.use(express.json());
@@ -26,6 +30,15 @@ app.use(
     exposedHeaders: ["set-cookie"],
   })
 )
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "your_secret_key", 
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: process.env.NODE_ENV === "production" },
+  })
+)
 app.get('/', (req, res) => {
   res.send('Hello from Express!');
 });
@@ -35,10 +48,12 @@ cron.schedule("0 0 * * *", async () => {
   console.log("Running cleanup of unverified users");
   await cleanupUnverifiedUsers();
 });
+app.use(passport.initialize());
+app.use(passport.session())
 
 app.use('/auth',authRoutes)
 app.use('/classroom',classroomRoute)
-
+  
 
 
 app.use("/admin", adminRoutes);

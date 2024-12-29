@@ -104,13 +104,26 @@ export class UserService implements IUserAuth {
       await this.userRepository.deleteUser(email);
     }
   }
-  async findUserById(userId: string): Promise<User | null> { // Implemented here
+  async findUserById(userId: string): Promise<User | null> { 
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new Error("User not found");
     }
     return user;
   }
-  
+  async findOrCreateGoogleUser(profile: any): Promise<User> {
+    let user = await this.userRepository.findByGoogleId(profile.id);
+    if (!user) {
+      user = await this.userRepository.create({
+        name: profile.displayName,
+        email: profile.emails[0].value,
+        googleId: profile.id,
+        profilepic: profile.photos[0].value,
+        verified: true,
+      });
+    }
+    return user;
+  }
+
 }
 

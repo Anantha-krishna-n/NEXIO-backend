@@ -63,6 +63,56 @@ export class authController {
         .json({ error: "Registration failed. Please try again." });
     }
   }
+  async authCallbackController(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    console.log("enter into google auth conyroller.")
+    try {
+      console.log("call back fun in controller with user data : ", req.user)
+      const user = req.user as any
+      
+      if (!user) {
+        return res.status(401).json({message: "Authentication failed"})
+      }
+      const {accessToken, refreshToken} = this.tokenService.generateTokens(
+        user._id
+      )
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+        maxAge: 24 * 60 * 60 * 1000,
+      })
+      res.cookie("accessToken", accessToken, {
+        httpOnly: false,
+        secure: true,
+        maxAge: 15 * 60 * 1000,
+      })
+      return res.redirect(
+        `${process.env.CLIENT_URL}?accessToken=${accessToken}`
+      )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async onUserFind(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.userId as string
+      const user = await this.authService.findUserById(userId)
+      let data = {
+        id: user?._id,
+        name :user?.name,
+        email: user?.email,
+        verified: user?.verified,
+        profilepic: user?.profilepic,
+      }
+      return res.json(data)
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   async onVerifyUser(req: Request, res: Response, next: NextFunction) {
     try {
@@ -101,7 +151,7 @@ export class authController {
       return res.status(500).json({ error: "Failed to resend OTP" });
     }
   }
-
+ 
   async onLoginUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password } = req.body;
