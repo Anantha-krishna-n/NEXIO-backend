@@ -12,6 +12,7 @@ const ClassroomSchema = new Schema<Classroom>({
     }],
     admin: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     inviteCode: { type: String, required: true, unique: true },
+    inviteLink: { type: String },
     createdAt: { type: Date, default: Date.now },
 });
 

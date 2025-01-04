@@ -124,6 +124,20 @@ export class UserService implements IUserAuth {
     }
     return user;
   }
+  async updateUserDetails(userId: string, updateData: Partial<User>): Promise<User | null> {
+    // Validate input data if needed
+    if (!updateData.name && !updateData.profilepic) {
+      throw new Error("No valid fields provided for update.");
+    }
+
+    // Update the user details in the repository
+    const updatedUser = await this.userRepository.updateUserPartialy(userId, updateData);
+    if (!updatedUser) {
+      throw new Error("User not found or update failed.");
+    }
+
+    return updatedUser;
+  }
 
 }
 

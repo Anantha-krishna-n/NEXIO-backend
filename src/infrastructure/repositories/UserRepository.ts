@@ -79,5 +79,12 @@ export class UserRepository implements IUserRepository {
       }
     }
   }
+  async updateUserPartialy(userId: string, updateData: Partial<User>): Promise<User | null> {
+    return await UserModel.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true }
+    );
+  }
   
 }

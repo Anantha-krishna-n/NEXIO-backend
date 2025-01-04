@@ -48,6 +48,7 @@ cron.schedule("0 0 * * *", async () => {
   console.log("Running cleanup of unverified users");
   await cleanupUnverifiedUsers();
 });
+
 app.use(passport.initialize());
 app.use(passport.session())
 

@@ -6,4 +6,8 @@ export interface IClassroomRepository {
     getPublicClassrooms(): Promise<Classroom[]>;
     getById(classroomId: string): Promise<Classroom | null>;
     addMember(classroomId: string, userId: string): Promise<Classroom>;
-  }
+    getPrivateClassroomsCreatedByUser(
+      adminId: string,
+      page: number,
+      limit: number
+    ): Promise<{ classrooms: Classroom[]; total: number }>;  }

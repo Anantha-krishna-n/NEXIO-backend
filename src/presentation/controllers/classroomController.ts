@@ -39,12 +39,22 @@ export class ClassroomController {
   async getPublicClassrooms(req: Request, res: Response) {
     try {
       const publicClassrooms = await this.classroomService.getPublicClassrooms();
-      res.status(200).json(publicClassrooms);
+  
+      const filteredClassrooms = publicClassrooms.filter(
+        (classroom) => classroom.type === "public"
+      );
+  
+      const randomClassrooms = filteredClassrooms
+        .sort(() => 0.5 - Math.random()) 
+        .slice(0, 5); 
+  
+      res.status(200).json(randomClassrooms);
     } catch (error) {
+      console.error("Error fetching public classrooms:", error);
       res.status(500).json({ error: "Failed to fetch public classrooms" });
     }
   }
- 
+  
   async joinClassroom(req: Request, res: Response) {
     try {
         const { classroomId } = req.params;
@@ -81,7 +91,57 @@ async getClassroomById(req: Request, res: Response): Promise<void> {
     res.status(500).json({ message: "Failed to fetch classroom.", error: err.message });
   }
 }
+async getUserCreatedPrivateClassrooms(req: Request, res: Response) {
+  try {
+    const adminId = req.userId;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = 3; 
+
+    if (!adminId) {
+      return res.status(400).json({ error: "Admin ID is required" });
+    }
+
+    const { classrooms, total } = await this.classroomService.getPrivateClassroomsCreatedByUser(
+      adminId,
+      page,
+      limit
+    );
+
+    res.status(200).json({
+      classrooms,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      totalItems: total
+    });
+  } catch (error) {
+    console.error("Error fetching private classrooms:", error);
+    res.status(500).json({ error: "Failed to fetch private classrooms" });
+  }
+}
+async joinClassroomByInvite(req: Request, res: Response) {
+  try {
+    const { inviteCode } = req.params;
+    const userId = req.userId;
+
+    if (!inviteCode || !userId) {
+      return res.status(400).json({ error: "Invite code and User ID are required." });
+    }
+
+    const classroom = await this.classroomService.joinClassroomByInvite(inviteCode, userId);
+
+    res.status(200).json({ message: "Successfully joined classroom", classroom });
+  } catch (error) {
+    const err = error as Error;
+    res.status(500).json({ error: err.message || "Failed to join classroom." });
+  }
+}
+
+
+}
+
+
+
 
   
-}
+
 

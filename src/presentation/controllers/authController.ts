@@ -235,5 +235,60 @@ export class authController {
       const err = error as Error;
       res.status(400).json({ error: err.message });
     }
-  } 
+  }
+  async updateUserDetails(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.userId; 
+      const { name, profilepic } = req.body;
+
+      // Validate inputs
+      if (!userId) {
+        return res.status(401).json({ 
+          success: false,
+          error: "Unauthorized: User ID not found" 
+        });
+      }
+
+      if (!name && !profilepic) {
+        return res.status(400).json({
+          success: false,
+          error: "At least one field (name or profile picture) must be provided for update"
+        });
+      }
+      // Create update object with only provided fields
+      const updateData: { name?: string; profilepic?: string } = {};
+      if (name) updateData.name = name;
+      if (profilepic) updateData.profilepic = profilepic;
+
+      // Update user
+      const updatedUser = await this.authService.updateUserDetails(userId, updateData);
+
+      if (!updatedUser) {
+        return res.status(404).json({
+          success: false,
+          error: "User not found"
+        });
+      }
+
+      // Return success response
+      return res.status(200).json({
+        success: true,
+        message: "User details updated successfully",
+        user: {
+          _id: updatedUser._id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          profilepic: updatedUser.profilepic
+        }
+      });
+
+    } catch (error) {
+      console.error("Error updating user details:", error);
+      return res.status(500).json({
+        success: false,
+        error: "An error occurred while updating user details"
+      });
+    }
+  }
+ 
 }

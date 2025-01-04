@@ -8,5 +8,6 @@ export interface IUserAuth {
     generateOTP(email: string): Promise<string>;
     resendOTP(email: string): Promise<string>;
     findUserById(userId: string): Promise<User | null>; // Added this line
-    
+    updateUserDetails(userId: string, updateData: { name?: string; profilepic?: string }): Promise<any>;
+
   }

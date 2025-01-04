@@ -27,10 +27,9 @@ router.get(
   controller.authCallbackController.bind(controller)
 );
 router.get("/users/me", refreshTokenHandler, controller.onUserFind.bind(controller));
-
+router.patch("/updateProfile",refreshTokenHandler,controller.updateUserDetails.bind(controller))
 router.post('/login',controller.onLoginUser.bind(controller));
 router.post('/logout',controller.onLogoutUser.bind(controller))
-
 
 export default router;
 

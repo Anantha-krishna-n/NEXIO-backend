@@ -32,9 +32,12 @@ export class ClassroomService{
           admin: new Types.ObjectId(adminId),
           createdAt: new Date()
         };
-    
         return await this.classroomRepository.create(classroomData);
+        const inviteLink = `${process.env.CLIENT_URL}/classrooms/join/${inviteCode}`;
+        
       }
+
+
       async getPublicClassrooms(): Promise<Classroom[]> {
         return await this.classroomRepository.getPublicClassrooms();
       }
@@ -48,7 +51,6 @@ export class ClassroomService{
             throw new Error("Classroom not found.");
         }
     
-        // Ensure no duplicate users are added to the classroom
         const isUserMember = classroom.members.some(member => 
           member.user._id.toString() === userId.toString()
       );
@@ -62,4 +64,28 @@ export class ClassroomService{
     return true
         
     }
+    async getPrivateClassroomsCreatedByUser(
+      adminId: string, 
+      page: number = 1, 
+      limit: number = 3
+    ): Promise<{ classrooms: Classroom[]; total: number }> {
+      return await this.classroomRepository.getPrivateClassroomsCreatedByUser(adminId, page, limit);
+    }
+    async joinClassroomByInvite(inviteCode: string, userId: string): Promise<Classroom> {
+      const classroom = await this.classroomRepository.getClassroomByInviteCode(inviteCode);
+      if (!classroom) {
+        throw new Error("Invalid invite code or classroom not found.");
+      }
+    
+      const isUserMember = classroom.members.some(
+        (member) => member.user._id.toString() === userId.toString()
+      );
+    
+      if (isUserMember) {
+        throw new Error("User is already a member of this classroom.");
+      }
+    
+      return await this.classroomRepository.addMember(classroom._id.toString(), userId);
+    }
+    
 }

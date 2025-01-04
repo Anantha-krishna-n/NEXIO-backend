@@ -29,23 +29,59 @@ export class ClassroomRepository implements IClassroomRepository {
     if (!classroom) {
         throw new Error("Classroom not found.");
     }
-
-
-    // Check if the user is the admin of the classroom
     const isAdmin = classroom.admin.toString() === userId;
     const role = isAdmin ? "admin" : "participant";
 
-    // If not admin, restrict entry for participants (optional condition here)
     if (!isAdmin && classroom.type === "private") {
         throw new Error("Only admin can join this classroom.");
     }
 
-    // Add the new member with appropriate role
     classroom.members.push({ user: new Types.ObjectId(userId), role });
 
     await classroom.save();
     return classroom.toObject();
 }
+async getPrivateClassroomsCreatedByUser(
+  adminId: string, 
+  page: number = 1, 
+  limit: number = 3
+): Promise<{ classrooms: Classroom[]; total: number }> {
+  try {
+    const skip = (page - 1) * limit;
+    
+    const [classrooms, total] = await Promise.all([
+      ClassroomModel.find({
+        type: "private",
+        admin: new Types.ObjectId(adminId),
+      })
+        .populate({
+          path: "admin",
+          select: "name email profile",
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      
+      ClassroomModel.countDocuments({
+        type: "private",
+        admin: new Types.ObjectId(adminId),
+      })
+    ]);
+
+    return { classrooms, total };
+  } catch (error) {
+    console.error('Error in getPrivateClassroomsCreatedByUser:', error);
+    throw error;
+  }
+}
+async getClassroomByInviteCode(inviteCode: string): Promise<Classroom | null> {
+  return await ClassroomModel.findOne({ inviteCode })
+    .populate('admin', 'name email profile')
+    .populate('members.user', 'name email profile')
+    .lean();
+}
+
 }
 
 

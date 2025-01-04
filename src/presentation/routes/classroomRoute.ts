@@ -14,9 +14,10 @@ const router = express.Router()
 
 router.post('/createroom',refreshTokenHandler,checkIfBlocked,controller.createClassroom.bind(controller))
 router.get('/public', controller.getPublicClassrooms.bind(controller))
+router.get('/user/private', refreshTokenHandler,controller.getUserCreatedPrivateClassrooms.bind(controller));
+
 
 router.post('/joinClassroom/:classroomId', refreshTokenHandler,checkIfBlocked, controller.joinClassroom.bind(controller));
 router.get('/:classroomId', refreshTokenHandler, controller.getClassroomById.bind(controller));
 
-  
   export default router;

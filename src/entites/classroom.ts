@@ -14,6 +14,7 @@ interface ClassroomMember {
     schedule: Date; 
     members: ClassroomMember[];
     inviteCode: string;
+    inviteLink:string;
     createdAt: Date;
     admin: Types.ObjectId | User;
 
