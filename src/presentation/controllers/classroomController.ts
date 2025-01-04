@@ -121,21 +121,26 @@ async getUserCreatedPrivateClassrooms(req: Request, res: Response) {
 async joinClassroomByInvite(req: Request, res: Response) {
   try {
     const { inviteCode } = req.params;
-    const userId = req.userId;
+    const userId = req.userId; 
 
     if (!inviteCode || !userId) {
-      return res.status(400).json({ error: "Invite code and User ID are required." });
+      return res.status(400).json({ error: "Invite code and user ID are required." });
     }
 
-    const classroom = await this.classroomService.joinClassroomByInvite(inviteCode, userId);
+    const classroom = await this.classroomService.validateInviteCode(inviteCode);
 
-    res.status(200).json({ message: "Successfully joined classroom", classroom });
+    if (!classroom) {
+      return res.status(400).json({ error: "Invalid or expired invite code." });
+    }
+
+    const updatedClassroom = await this.classroomService.joinClassroom(classroom._id.toString(), userId);
+
+    res.status(200).json({ message: "Successfully joined classroom", classroom: updatedClassroom });
   } catch (error) {
     const err = error as Error;
     res.status(500).json({ error: err.message || "Failed to join classroom." });
   }
 }
-
 
 }
 

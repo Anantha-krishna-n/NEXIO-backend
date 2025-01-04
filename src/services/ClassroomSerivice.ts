@@ -19,24 +19,28 @@ export class ClassroomService{
         const schedule = new Date(date);
         const [hours, minutes] = time.split(':');
         schedule.setHours(parseInt(hours, 10), parseInt(minutes, 10));
-    
+      
         const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    
+      
+        // Generate invite link only for private classrooms
+        const inviteLink = type === 'private' ? `https://yourdomain.com/classroom/invite/${inviteCode}` : undefined;
+      console.log(inviteLink,"inviteLink got ")
         const classroomData: Partial<Classroom> = {
           title,
           description,
           type,
           schedule,
           inviteCode,
+          inviteLink, // This will only be `string` or `undefined`
           members: [],
           admin: new Types.ObjectId(adminId),
-          createdAt: new Date()
+          createdAt: new Date(),
+          ...(type === 'private' && { inviteLink }), 
         };
+      
         return await this.classroomRepository.create(classroomData);
-        const inviteLink = `${process.env.CLIENT_URL}/classrooms/join/${inviteCode}`;
-        
       }
-
+      
 
       async getPublicClassrooms(): Promise<Classroom[]> {
         return await this.classroomRepository.getPublicClassrooms();
@@ -71,21 +75,13 @@ export class ClassroomService{
     ): Promise<{ classrooms: Classroom[]; total: number }> {
       return await this.classroomRepository.getPrivateClassroomsCreatedByUser(adminId, page, limit);
     }
-    async joinClassroomByInvite(inviteCode: string, userId: string): Promise<Classroom> {
-      const classroom = await this.classroomRepository.getClassroomByInviteCode(inviteCode);
-      if (!classroom) {
-        throw new Error("Invalid invite code or classroom not found.");
+    async validateInviteCode(inviteCode: string): Promise<Classroom | null> {
+      const classroom = await this.classroomRepository.getByInviteCode(inviteCode);
+      if (!classroom || classroom.type !== 'private') {
+        throw new Error("Invalid or expired invite code.");
       }
-    
-      const isUserMember = classroom.members.some(
-        (member) => member.user._id.toString() === userId.toString()
-      );
-    
-      if (isUserMember) {
-        throw new Error("User is already a member of this classroom.");
-      }
-    
-      return await this.classroomRepository.addMember(classroom._id.toString(), userId);
+      return classroom;
     }
+    
     
 }

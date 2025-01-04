@@ -19,5 +19,5 @@ router.get('/user/private', refreshTokenHandler,controller.getUserCreatedPrivate
 
 router.post('/joinClassroom/:classroomId', refreshTokenHandler,checkIfBlocked, controller.joinClassroom.bind(controller));
 router.get('/:classroomId', refreshTokenHandler, controller.getClassroomById.bind(controller));
-
+router.post( '/join/invite/:inviteCode',refreshTokenHandler,controller.joinClassroomByInvite.bind(controller))
   export default router;

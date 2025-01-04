@@ -75,11 +75,8 @@ async getPrivateClassroomsCreatedByUser(
     throw error;
   }
 }
-async getClassroomByInviteCode(inviteCode: string): Promise<Classroom | null> {
-  return await ClassroomModel.findOne({ inviteCode })
-    .populate('admin', 'name email profile')
-    .populate('members.user', 'name email profile')
-    .lean();
+async getByInviteCode(inviteCode: string): Promise<Classroom | null> {
+  return await ClassroomModel.findOne({ inviteCode }).lean();
 }
 
 }
