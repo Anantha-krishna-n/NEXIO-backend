@@ -16,8 +16,7 @@ export const refreshTokenHandler = async (
 ) => {
   try {
     const { accessToken, refreshToken } = req.cookies;
-console.log(accessToken,"accessToken")
-console.log(refreshToken,"refreshToken")
+
     if (!refreshToken && !accessToken) {
       return res.status(401).json({ error: "Please log in again" });
     }

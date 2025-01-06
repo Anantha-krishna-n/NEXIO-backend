@@ -24,23 +24,42 @@ export class ClassroomRepository implements IClassroomRepository {
       .populate('members.user', 'name email profile')
       .lean();
   }
-  async addMember(classroomId: string, userId: string): Promise<Classroom> {
+  async addMember(classroomId: string, userId: string, isInvited: boolean = false): Promise<Classroom> {
     const classroom = await ClassroomModel.findById(classroomId);
     if (!classroom) {
-        throw new Error("Classroom not found.");
+      throw new Error("Classroom not found.");
     }
+
     const isAdmin = classroom.admin.toString() === userId;
     const role = isAdmin ? "admin" : "participant";
 
-    if (!isAdmin && classroom.type === "private") {
-        throw new Error("Only admin can join this classroom.");
+    // Check if user is already a member
+    const existingMember = classroom.members.find(
+      member => member.user.toString() === userId
+    );
+    if (existingMember) {
+      return classroom.toObject();
+    }
+
+    // Allow joining if:
+    // 1. It's a public classroom, OR
+    // 2. User is admin, OR
+    // 3. User has a valid invite (isInvited = true)
+    if (classroom.type === "private" && !isAdmin && !isInvited) {
+      throw new Error("Only admin can join this private classroom without an invite.");
     }
 
     classroom.members.push({ user: new Types.ObjectId(userId), role });
-
     await classroom.save();
-    return classroom.toObject();
-}
+
+    // Return populated classroom data
+    const updatedClassroom = await ClassroomModel.findById(classroomId)
+      .populate('admin', 'name email profile')
+      .populate('members.user', 'name email profile')
+      .lean();
+
+    return updatedClassroom as Classroom;
+  }
 async getPrivateClassroomsCreatedByUser(
   adminId: string, 
   page: number = 1, 
@@ -76,9 +95,11 @@ async getPrivateClassroomsCreatedByUser(
   }
 }
 async getByInviteCode(inviteCode: string): Promise<Classroom | null> {
-  return await ClassroomModel.findOne({ inviteCode }).lean();
+  return await ClassroomModel.findOne({ inviteCode })
+    .populate('admin', 'name email profile')
+    .populate('members.user', 'name email profile')
+    .lean();
 }
-
 }
 
 

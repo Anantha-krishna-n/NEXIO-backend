@@ -49,25 +49,27 @@ export class ClassroomService{
       async getClassroomById(classroomId: string): Promise<Classroom | null> {
         return await this.classroomRepository.getById(classroomId);
       }
-      async joinClassroom(classroomId: string, userId: string): Promise<Classroom | boolean> {
+      async joinClassroom(classroomId: string, userId: string, isInvited: boolean = false): Promise<Classroom | boolean> {
         const classroom = await this.classroomRepository.getById(classroomId);
+        console.log("Joining classroom:", { classroomId, userId, isInvited });
+        
         if (!classroom) {
-            throw new Error("Classroom not found.");
+          throw new Error("Classroom not found.");
         }
     
-        const isUserMember = classroom.members.some(member => 
-          member.user._id.toString() === userId.toString()
-      );
-      
-           console.log('////////',isUserMember);
-           
+        const isUserMember = classroom.members.some(member => {
+          const memberId = member.user._id?.toString() || member.user?.toString();
+          return memberId === userId;
+        });
+    
+        console.log("Is user member:", isUserMember);
+    
         if (!isUserMember) {
-          return await this.classroomRepository.addMember(classroomId, userId);
-
+          return await this.classroomRepository.addMember(classroomId, userId, isInvited);
         }
-    return true
-        
-    }
+    
+        return true && classroom;
+      }
     async getPrivateClassroomsCreatedByUser(
       adminId: string, 
       page: number = 1, 
