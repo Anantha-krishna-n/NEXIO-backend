@@ -85,5 +85,32 @@ export class ClassroomService{
       return classroom;
     }
     
-    
+    async getClassroomMembers(classroomId: string, userId: string): Promise<any[]> {
+  const classroom = await this.classroomRepository.getClassroomWithMembers(classroomId);
+  
+  if (!classroom) {
+    throw new Error("Classroom not found");
+  }
+
+  const isMember = classroom.members.some(member => 
+    member.user._id.toString() === userId || 
+    classroom.admin._id.toString() === userId
+  );
+  console.log(isMember,"members")
+  if (!isMember) {
+    throw new Error("Unauthorized access to classroom members");
+  }
+
+  return classroom.members;
+
+}
+async getClassroomInviteLink(classroomId: string): Promise<string | null> {
+  const classroom = await this.classroomRepository.getById(classroomId);
+  if (!classroom || classroom.type !== "private") {
+    throw new Error("Classroom not found or is not private.");
+  }
+  return classroom.inviteLink || null;
+}
+
+
 }

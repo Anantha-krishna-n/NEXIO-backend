@@ -121,7 +121,6 @@ export class authController {
       if (!email || !otp) {
         return res.status(400).json({ error: "Email and OTP are required" });
       }
-
       const verifiedUser = await this.authService.verifyUser(email, otp);
 
       if (!verifiedUser) {
@@ -143,7 +142,6 @@ export class authController {
       if (!email) {
         return res.status(400).json({ error: "Email is required" });
       }
-
       await this.authService.resendOTP(email);
       return res.json({ message: "New OTP sent successfully" });
     } catch (error) {
@@ -161,7 +159,7 @@ export class authController {
           .status(400)
           .json({ error: "Email and password are required" });
       }
-
+  
       const user = await this.authService.loginUser(email, password);
       console.log("controller user", user?._id);
       if (!user) {
@@ -184,8 +182,6 @@ export class authController {
         sameSite: "none",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-
-
 
       return res.json({
         success: true,

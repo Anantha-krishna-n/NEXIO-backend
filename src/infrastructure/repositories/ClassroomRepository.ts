@@ -41,10 +41,7 @@ export class ClassroomRepository implements IClassroomRepository {
       return classroom.toObject();
     }
 
-    // Allow joining if:
-    // 1. It's a public classroom, OR
-    // 2. User is admin, OR
-    // 3. User has a valid invite (isInvited = true)
+    
     if (classroom.type === "private" && !isAdmin && !isInvited) {
       throw new Error("Only admin can join this private classroom without an invite.");
     }
@@ -100,6 +97,21 @@ async getByInviteCode(inviteCode: string): Promise<Classroom | null> {
     .populate('members.user', 'name email profile')
     .lean();
 }
+async getClassroomWithMembers(classroomId: string): Promise<Classroom | null> {
+  const classroom = await ClassroomModel.findById(classroomId)
+    .populate('admin', 'name email profilepic')
+    .populate('members.user', 'name email profilepic')
+    .lean();
+
+  if (!classroom) {
+    console.error('Classroom not found:', classroomId);
+    return null;
+  }
+
+  console.log('Fetched classroom members:', classroom.members);
+  return classroom;
+}
+
 }
 
 

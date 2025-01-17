@@ -20,4 +20,7 @@ router.get('/user/private', refreshTokenHandler,controller.getUserCreatedPrivate
 router.post('/joinClassroom/:classroomId', refreshTokenHandler,checkIfBlocked, controller.joinClassroom.bind(controller));
 router.get('/:classroomId', refreshTokenHandler, controller.getClassroomById.bind(controller));
 router.post( '/join/invite/:inviteCode',refreshTokenHandler,controller.joinClassroomByInvite.bind(controller))
+router.get('/:roomId/members', refreshTokenHandler, controller.getClassroomMembers.bind(controller));
+router.post('/invite', refreshTokenHandler, checkIfBlocked, controller.inviteUserToClassroom.bind(controller));
+
   export default router;

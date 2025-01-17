@@ -10,4 +10,7 @@ export interface IClassroomRepository {
       adminId: string,
       page: number,
       limit: number
-    ): Promise<{ classrooms: Classroom[]; total: number }>;  }
+    ): Promise<{ classrooms: Classroom[]; total: number }>; 
+    getClassroomWithMembers(classroomId: string): Promise<Classroom | null>;
+
+   }

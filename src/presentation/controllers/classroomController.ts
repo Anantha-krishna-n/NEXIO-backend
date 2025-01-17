@@ -3,6 +3,13 @@ import { Request, Response } from "express";
 import { ClassroomService } from "../../services/ClassroomSerivice";
 import jwt from "jsonwebtoken";
 import { error } from "console";
+import { Mailer } from "../../external/Mailer";
+import { HttpStatusCode } from "../utils/HttpStatusCode";
+import {
+  ErrorMessages,
+  SuccessMessages,
+  GenericMessages,
+} from "../utils/Constants";
 
 export class ClassroomController {
   private classroomService: ClassroomService;
@@ -13,15 +20,16 @@ export class ClassroomController {
 
   async createClassroom(req: Request, res: Response) {
     try {
-    console.log("Entered into classroom")
+      console.log("Entered into classroom");
       const { title, description, date, time, type } = req.body;
       const adminId = req.userId;
-      console.log(adminId,"adminId ")
-      
-      if (!title || !date || !time) {
-        return res.status(400).json({ error: "Name, date, and time are required" });
-      }
+      console.log(adminId, "adminId ");
 
+      if (!title || !date || !time) {
+        return res
+          .status(HttpStatusCode.BAD_REQUEST)
+          .json({ error: ErrorMessages.REQUIRED_FIELDS });
+      }
       const classroom = await this.classroomService.createClassroom(
         title,
         description,
@@ -30,132 +38,253 @@ export class ClassroomController {
         type,
         adminId as string
       );
-      console.log("classroom",classroom)
-      res.status(201).json(classroom);
+      console.log("classroom", classroom);
+      res
+        .status(HttpStatusCode.CREATED)
+        .json({ message: SuccessMessages.CLASSROOM_CREATED, classroom });
     } catch (error) {
-      res.status(500).json({ error: "Failed to create classroom" });
+      res
+        .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: ErrorMessages.FAILED_TO_CREATE_CLASSROOM });
     }
   }
+
   async getPublicClassrooms(req: Request, res: Response) {
     try {
-      const publicClassrooms = await this.classroomService.getPublicClassrooms();
-  
+      const publicClassrooms =
+        await this.classroomService.getPublicClassrooms();
+
       const filteredClassrooms = publicClassrooms.filter(
         (classroom) => classroom.type === "public"
       );
-  
+
       const randomClassrooms = filteredClassrooms
-        .sort(() => 0.5 - Math.random()) 
-        .slice(0, 5); 
-  
-      res.status(200).json(randomClassrooms);
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 5);
+
+      res.status(HttpStatusCode.OK).json(randomClassrooms);
     } catch (error) {
       console.error("Error fetching public classrooms:", error);
-      res.status(500).json({ error: "Failed to fetch public classrooms" });
+      res
+        .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: ErrorMessages.FAILED_TO_FETCH_PUBLIC_CLASSROOMS });
     }
   }
-  
+
   async joinClassroom(req: Request, res: Response) {
     try {
-        const { classroomId } = req.params;
-        const userId = req.userId; // Extracted from middleware
+      const { classroomId } = req.params;
+      const userId = req.userId;
 
-        if (!classroomId || !userId) {
-            return res.status(400).json({ error: "Classroom ID and User ID are required." });
-        }
+      if (!classroomId || !userId) {
+        return res
+          .status(HttpStatusCode.BAD_REQUEST)
+          .json({ error: ErrorMessages.REQUIRED_FIELDS });
+      }
 
-        // Attempt to join the classroom
-        const updatedClassroom = await this.classroomService.joinClassroom(classroomId, userId);
+      const updatedClassroom = await this.classroomService.joinClassroom(
+        classroomId,
+        userId
+      );
 
-        res.status(200).json({ message: "Successfully joined classroom", classroom: updatedClassroom });
+      res.status(HttpStatusCode.OK).json({
+        message: SuccessMessages.JOINED_CLASSROOM,
+        classroom: updatedClassroom,
+      });
     } catch (error) {
-        const err = error as Error;
-        res.status(500).json({ error: err.message || "Failed to join classroom." });
+      const err = error as Error;
+      res
+        .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: err.message || ErrorMessages.FAILED_TO_JOIN_CLASSROOM });
     }
-}
-
-
-async getClassroomById(req: Request, res: Response): Promise<void> {
-  try {
-    const { classroomId } = req.params;
-
-    const classroom = await this.classroomService.getClassroomById(classroomId);
-    if (!classroom) {
-      res.status(404).json({ message: "Classroom not found." });
-      return;
-    }
-
-    res.status(200).json({ message: "Classroom fetched successfully.", classroom });
-  } catch (error) {
-    const err = error as Error
-    res.status(500).json({ message: "Failed to fetch classroom.", error: err.message });
   }
-}
-async getUserCreatedPrivateClassrooms(req: Request, res: Response) {
-  try {
-    const adminId = req.userId;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = 3; 
 
-    if (!adminId) {
-      return res.status(400).json({ error: "Admin ID is required" });
+  async getClassroomById(req: Request, res: Response): Promise<void> {
+    try {
+      const { classroomId } = req.params;
+
+      const classroom = await this.classroomService.getClassroomById(
+        classroomId
+      );
+      if (!classroom) {
+        res
+          .status(HttpStatusCode.NOT_FOUND)
+          .json({ message: ErrorMessages.CLASSROOM_NOT_FOUND });
+        return;
+      }
+
+      res
+        .status(HttpStatusCode.OK)
+        .json({ message: SuccessMessages.CLASSROOM_FETCHED, classroom });
+    } catch (error) {
+      const err = error as Error;
+      res
+        .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+        .json({
+          message: ErrorMessages.FAILED_TO_FETCH_CLASSROOM_MEMBERS,
+          error: err.message,
+        });
     }
-
-    const { classrooms, total } = await this.classroomService.getPrivateClassroomsCreatedByUser(
-      adminId,
-      page,
-      limit
-    );
-
-    res.status(200).json({
-      classrooms,
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
-      totalItems: total
-    });
-  } catch (error) {
-    console.error("Error fetching private classrooms:", error);
-    res.status(500).json({ error: "Failed to fetch private classrooms" });
   }
-}
-async joinClassroomByInvite(req: Request, res: Response) {
-  try {
-    console.log("Entered into the controller for join by invite");
-    const { inviteCode } = req.params;
-    const userId = req.userId;
+  async getUserCreatedPrivateClassrooms(req: Request, res: Response) {
+    try {
+      const adminId = req.userId;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = 3;
 
-    console.log("Join request:", { inviteCode, userId });
+      if (!adminId) {
+        return res
+          .status(HttpStatusCode.BAD_REQUEST)
+          .json({ error: ErrorMessages.REQUIRED_FIELDS });
+      }
 
-    if (!inviteCode || !userId) {
-      return res.status(400).json({ error: "Invite code and user ID are required." });
+      const { classrooms, total } =
+        await this.classroomService.getPrivateClassroomsCreatedByUser(
+          adminId,
+          page,
+          limit
+        );
+
+      res.status(HttpStatusCode.OK).json({
+        classrooms,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+      });
+    } catch (error) {
+      console.error("Error fetching private classrooms:", error);
+      res
+        .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: ErrorMessages.FAILED_TO_FETCH_PRIVATE_CLASSROOMS });
     }
-
-    const classroom = await this.classroomService.validateInviteCode(inviteCode);
-    
-    if (!classroom) {
-      return res.status(400).json({ error: "Invalid or expired invite code." });
-    }
-
-    const classroomId = classroom._id.toString();
-    // Pass isInvited as true since they're joining with an invite code
-    const updatedClassroom = await this.classroomService.joinClassroom(classroomId, userId, true);
-
-    res.status(200).json({ 
-      message: "Successfully joined classroom", 
-      classroom: updatedClassroom 
-    });
-  } catch (error) {
-    const err = error as Error;
-    console.error("Error joining classroom by invite:", err);
-    res.status(500).json({ error: err.message || "Failed to join classroom." });
   }
-}
+  async joinClassroomByInvite(req: Request, res: Response) {
+    try {
+      console.log("Entered into the controller for join by invite");
+      const { inviteCode } = req.params;
+      const userId = req.userId;
 
-}
+      console.log("Join request:", { inviteCode, userId });
 
+      if (!inviteCode || !userId) {
+        return res
+          .status(HttpStatusCode.BAD_REQUEST)
+          .json({ error: ErrorMessages.REQUIRED_FIELDS });
+      }
 
+      const classroom = await this.classroomService.validateInviteCode(
+        inviteCode
+      );
 
+      if (!classroom) {
+        return res
+          .status(HttpStatusCode.BAD_REQUEST)
+          .json({ error: ErrorMessages.INVALID_INVITE_CODE });
+      }
 
+      const classroomId = classroom._id.toString();
+      const updatedClassroom = await this.classroomService.joinClassroom(
+        classroomId,
+        userId,
+        true
+      );
+
+      res.status(HttpStatusCode.OK).json({
+        message: SuccessMessages.JOINED_CLASSROOM,
+        classroom: updatedClassroom,
+      });
+    } catch (error) {
+      res
+        .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: ErrorMessages.FAILED_TO_JOIN_CLASSROOM });
+    }
+  }
+  async getClassroomMembers(req: Request, res: Response) {
+    try {
+      const { roomId } = req.params;
+      const userId = req.userId;
+      console.log(userId, "privateroom");
+      if (!roomId) {
+        return res
+          .status(HttpStatusCode.BAD_REQUEST)
+          .json({ error: ErrorMessages.REQUIRED_CLASSROOM_ID });
+      }
+
+      const members = await this.classroomService.getClassroomMembers(
+        roomId,
+        userId as string
+      );
+
+      res
+        .status(HttpStatusCode.OK)
+        .json({ message: SuccessMessages.MEMBERS_FETCHED, members });
+    } catch (error) {
+      const err = error as Error;
+      res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
+        error: err.message || ErrorMessages.FAILED_TO_FETCH_CLASSROOM_MEMBERS,
+      });
+    }
+  }
+  async inviteUserToClassroom(req: Request, res: Response) {
+    try {
+      const { classroomId, email } = req.body;
+  
+      if (!classroomId || !email) {
+        return res
+          .status(HttpStatusCode.BAD_REQUEST)
+          .json({ error: ErrorMessages.REQUIRED_CLASSROOM_ID_AND_EMAIL });
+      }
+  
+      const inviteLink = await this.classroomService.getClassroomInviteLink(classroomId);
+      if (!inviteLink) {
+        return res
+          .status(HttpStatusCode.NOT_FOUND)
+          .json({ error: ErrorMessages.CLASSROOM_NOT_FOUND });
+      }
+  
+      const mailer = new Mailer();
+      const emailContent = `Hello, you have been invited to join the classroom. Use this link to join: ${inviteLink}`;
+      await mailer.SendEmail(email, emailContent);
+  
+      res
+        .status(HttpStatusCode.OK)
+        .json({ message: SuccessMessages.INVITATION_SENT(email) });
+    } catch (error) {
+      const err = error as Error;
+      res
+        .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: err.message || ErrorMessages.FAILED_TO_SEND_INVITE });
+    }
+  }
   
 
-
+  async joinClassroomWithInvite(req: Request, res: Response) {
+    try {
+      const { inviteCode } = req.body;
+      const userId = req.userId;
+  
+      if (!inviteCode || !userId) {
+        return res
+          .status(HttpStatusCode.BAD_REQUEST)
+          .json({ error: ErrorMessages.REQUIRED_INVITE_CODE_OR_USER_ID });
+      }
+  
+      const classroom = await this.classroomService.joinClassroom(inviteCode, userId);
+      if (!classroom) {
+        return res
+          .status(HttpStatusCode.NOT_FOUND)
+          .json({ error: ErrorMessages.CLASSROOM_NOT_FOUND });
+      }
+  
+      return res
+        .status(HttpStatusCode.OK)
+        .json({ message: SuccessMessages.JOINED_CLASSROOM });
+    } catch (error) {
+      const err = error as Error;
+      res
+        .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: err.message || ErrorMessages.FAILED_TO_JOIN_CLASSROOM });
+    }
+  }
+  
+}
