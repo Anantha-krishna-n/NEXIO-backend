@@ -227,8 +227,10 @@ export class ClassroomController {
   }
   async inviteUserToClassroom(req: Request, res: Response) {
     try {
-      const { classroomId, email } = req.body;
-  
+      const {classroomId}=req.params;
+      const {  email } = req.body;
+  console.log(classroomId,"classroom")
+  console.log(email,"email")
       if (!classroomId || !email) {
         return res
           .status(HttpStatusCode.BAD_REQUEST)
@@ -236,6 +238,7 @@ export class ClassroomController {
       }
   
       const inviteLink = await this.classroomService.getClassroomInviteLink(classroomId);
+  
       if (!inviteLink) {
         return res
           .status(HttpStatusCode.NOT_FOUND)
@@ -243,12 +246,9 @@ export class ClassroomController {
       }
   
       const mailer = new Mailer();
-      const emailContent = `Hello, you have been invited to join the classroom. Use this link to join: ${inviteLink}`;
-      await mailer.SendEmail(email, emailContent);
+      await mailer.SendEmail(email, { type: "invite", value: inviteLink });
   
-      res
-        .status(HttpStatusCode.OK)
-        .json({ message: SuccessMessages.INVITATION_SENT(email) });
+      res.status(HttpStatusCode.OK).json({ message: SuccessMessages.INVITATION_SENT(email) });
     } catch (error) {
       const err = error as Error;
       res
@@ -260,25 +260,21 @@ export class ClassroomController {
 
   async joinClassroomWithInvite(req: Request, res: Response) {
     try {
-      const { inviteCode } = req.body;
-      const userId = req.userId;
-  
-      if (!inviteCode || !userId) {
-        return res
-          .status(HttpStatusCode.BAD_REQUEST)
-          .json({ error: ErrorMessages.REQUIRED_INVITE_CODE_OR_USER_ID });
-      }
-  
-      const classroom = await this.classroomService.joinClassroom(inviteCode, userId);
+      const { inviteCode } = req.params;
+      
+      const classroom = await this.classroomService.validateInviteCode(inviteCode);
+      
       if (!classroom) {
         return res
           .status(HttpStatusCode.NOT_FOUND)
-          .json({ error: ErrorMessages.CLASSROOM_NOT_FOUND });
+          .json({ error: ErrorMessages.INVALID_INVITE_CODE });
+      }
+      if (!req.userId) {
+        const returnUrl = `/classroom/join/invite/${inviteCode}/${classroom._id}`;
+        return res.redirect(`${process.env.CLIENT_URL}/login?returnUrl=${encodeURIComponent(returnUrl)}`);
       }
   
-      return res
-        .status(HttpStatusCode.OK)
-        .json({ message: SuccessMessages.JOINED_CLASSROOM });
+      res.redirect(`/classroom/${classroom._id}`);
     } catch (error) {
       const err = error as Error;
       res
@@ -286,5 +282,33 @@ export class ClassroomController {
         .json({ error: err.message || ErrorMessages.FAILED_TO_JOIN_CLASSROOM });
     }
   }
+  async validateInviteCode(req: Request, res: Response) {
+    try {
+      const { inviteCode } = req.params;
+      const userId=req.userId
+      const classroom = await this.classroomService.validateInviteCode(inviteCode);
+      
+      if (!classroom) {
+        return res
+          .status(HttpStatusCode.NOT_FOUND)
+          .json({ error: ErrorMessages.INVALID_INVITE_CODE });
+      }
   
+      const classroomId = classroom._id.toString();
+      const updatedClassroom = await this.classroomService.joinClassroom(
+        classroomId,
+        userId as string,
+        true
+      );
+      res.status(HttpStatusCode.OK).json({ 
+        message: SuccessMessages.INVITE_CODE_VALID,
+        classroom :updatedClassroom
+      });
+    } catch (error) {
+      const err = error as Error;
+      res
+        .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: err.message || ErrorMessages.FAILED_TO_VALIDATE_INVITE });
+    }
+  }
 }

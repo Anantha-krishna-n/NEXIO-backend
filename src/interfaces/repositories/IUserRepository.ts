@@ -12,5 +12,6 @@ export interface IUserRepository {
     toggleBlockStatus(userId: string, isBlocked: boolean): Promise<User | null>;
     getAllUsers(page: number, limit: number): Promise<{ users: User[]; total: number }>;
     findById(userId: string): Promise<any>;
+   
   }
   

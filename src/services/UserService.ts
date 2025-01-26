@@ -39,7 +39,7 @@ export class UserService implements IUserAuth {
     });
     const otp = await this.generateOTP(email);
 
-    await this.mailer.SendEmail(email, `Your OTP is: ${otp}`);
+    await this.mailer.SendEmail(email, { type: "otp", value: `Your OTP is: ${otp}` });
 
     setTimeout(() => this.deleteUnverifiedUser(email), 24 * 60 * 60 * 1000);
 
@@ -75,7 +75,7 @@ export class UserService implements IUserAuth {
 
     async resendOTP(email: string): Promise<string> {
     const otp = await this.generateOTP(email);
-    await this.mailer.SendEmail(email, `Your new OTP is: ${otp}`);
+    await this.mailer.SendEmail(email, { type: "otp", value: `Your new OTP is: ${otp}` });
     return otp;
   }
 
@@ -125,18 +125,61 @@ export class UserService implements IUserAuth {
     return user;
   }
   async updateUserDetails(userId: string, updateData: Partial<User>): Promise<User | null> {
-    // Validate input data if needed
     if (!updateData.name && !updateData.profilepic) {
       throw new Error("No valid fields provided for update.");
     }
 
-    // Update the user details in the repository
     const updatedUser = await this.userRepository.updateUserPartialy(userId, updateData);
     if (!updatedUser) {
       throw new Error("User not found or update failed.");
     }
 
     return updatedUser;
+  }
+  
+  async forgotPasswordRequest(email: string): Promise<boolean> {
+    const user = await this.findUserByEmail(email);
+    
+    if (!user || !user.verified) {
+      return false;
+    }
+  
+    const otp = generateOTP();
+    const otpExpires = new Date(Date.now() + 15 * 60 * 1000); 
+  
+    await this.userRepository.updateUser(email, { 
+      otp, 
+      otpExpires 
+    });
+  
+    await this.mailer.SendEmail(email, { 
+      type: "otp", 
+      value: `Your password reset OTP is: ${otp}. This OTP will expire in 15 minutes.` 
+    });
+  
+    return true;
+  }
+  
+  async resetPassword(email: string, otp: string, newPassword: string): Promise<boolean> {
+    const user = await this.findUserByEmail(email);
+    
+    if (!user || !user.otp || !user.otpExpires) {
+      return false;
+    }
+  
+    if (user.otp !== otp || user.otpExpires < new Date()) {
+      return false;
+    }
+  
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+  
+    await this.userRepository.updateUser(email, { 
+      password: hashedPassword, 
+      otp: null, 
+      otpExpires: null 
+    });
+  
+    return true;
   }
 
 }

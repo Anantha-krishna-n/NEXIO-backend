@@ -9,5 +9,7 @@ export interface IUserAuth {
     resendOTP(email: string): Promise<string>;
     findUserById(userId: string): Promise<User | null>; // Added this line
     updateUserDetails(userId: string, updateData: { name?: string; profilepic?: string }): Promise<any>;
-
+    forgotPasswordRequest(email: string): Promise<boolean>;
+    resetPassword(email: string, otp: string, newPassword: string): Promise<boolean>
+  
   }

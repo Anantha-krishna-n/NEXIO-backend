@@ -22,8 +22,7 @@ export class ClassroomService{
       
         const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       
-        // Generate invite link only for private classrooms
-        const inviteLink = type === 'private' ? `https://yourdomain.com/classroom/invite/${inviteCode}` : undefined;
+        const inviteLink = type === 'private' ? `${process.env.SERVER_URL}/classroom/invite/${inviteCode}` : undefined;
       console.log(inviteLink,"inviteLink got ")
         const classroomData: Partial<Classroom> = {
           title,
@@ -31,7 +30,7 @@ export class ClassroomService{
           type,
           schedule,
           inviteCode,
-          inviteLink, // This will only be `string` or `undefined`
+          inviteLink, 
           members: [],
           admin: new Types.ObjectId(adminId),
           createdAt: new Date(),
@@ -106,11 +105,11 @@ export class ClassroomService{
 }
 async getClassroomInviteLink(classroomId: string): Promise<string | null> {
   const classroom = await this.classroomRepository.getById(classroomId);
+  console.log(classroom,"service")
   if (!classroom || classroom.type !== "private") {
     throw new Error("Classroom not found or is not private.");
   }
   return classroom.inviteLink || null;
 }
-
 
 }

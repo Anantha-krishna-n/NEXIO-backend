@@ -86,5 +86,5 @@ export class UserRepository implements IUserRepository {
       { new: true }
     );
   }
-  
+
 }

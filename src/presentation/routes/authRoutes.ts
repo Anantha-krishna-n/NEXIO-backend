@@ -30,6 +30,8 @@ router.get("/users/me", refreshTokenHandler, controller.onUserFind.bind(controll
 router.patch("/updateProfile",refreshTokenHandler,controller.updateUserDetails.bind(controller))
 router.post('/login',controller.onLoginUser.bind(controller));
 router.post('/logout',controller.onLogoutUser.bind(controller))
+router.post('/forgot-password',controller.onForgotPasswordRequest.bind(controller))
+router.post('/reset-password',controller.onResetPassword.bind(controller))
 
 export default router;
 

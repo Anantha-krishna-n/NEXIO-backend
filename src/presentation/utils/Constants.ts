@@ -1,34 +1,71 @@
 export const ErrorMessages = {
-    REQUIRED_FIELDS: "Name, date, and time are required.",
-    INVALID_INVITE_CODE: "Invalid or expired invite code.",
-    FAILED_TO_CREATE_CLASSROOM: "Failed to create classroom.",
-    FAILED_TO_FETCH_PUBLIC_CLASSROOMS: "Failed to fetch public classrooms.",
-    FAILED_TO_JOIN_CLASSROOM: "Failed to join classroom.",
-    FAILED_TO_FETCH_CLASSROOM_MEMBERS: "Failed to fetch classroom members.",
-    FAILED_TO_SEND_INVITE: "Failed to send invite.",
-    FAILED_TO_FETCH_PRIVATE_CLASSROOMS: "Failed to fetch private classrooms.",
-    REQUIRED_CLASSROOM_ID: "Classroom ID is required",
-    CLASSROOM_NOT_FOUND: "Classroom not found.",
-    BAD_REQUEST: "Bad Request.",
-    REQUIRED_CLASSROOM_ID_AND_EMAIL: "Classroom ID and email are required.",
-    REQUIRED_INVITE_CODE_OR_USER_ID: "Invite code and user ID are required.",
+  // ClassroomController errors
+  REQUIRED_FIELDS: "Name, date, and time are required.",
+  INVALID_INVITE_CODE: "Invalid or expired invite code.",
+  FAILED_TO_CREATE_CLASSROOM: "Failed to create classroom.",
+  FAILED_TO_FETCH_PUBLIC_CLASSROOMS: "Failed to fetch public classrooms.",
+  FAILED_TO_JOIN_CLASSROOM: "Failed to join classroom.",
+  FAILED_TO_FETCH_CLASSROOM_MEMBERS: "Failed to fetch classroom members.",
+  FAILED_TO_SEND_INVITE: "Failed to send invite.",
+  FAILED_TO_FETCH_PRIVATE_CLASSROOMS: "Failed to fetch private classrooms.",
+  FAILED_TO_VALIDATE_INVITE: "Failed to validate the invite code for the room.",
+  REQUIRED_CLASSROOM_ID: "Classroom ID is required.",
+  CLASSROOM_NOT_FOUND: "Classroom not found.",
+  BAD_REQUEST: "Bad Request.",
+  REQUIRED_CLASSROOM_ID_AND_EMAIL: "Classroom ID and email are required.",
+  REQUIRED_INVITE_CODE_OR_USER_ID: "Invite code and user ID are required.",
 
+  // AuthController errors
+  ALL_FIELDS_REQUIRED: "All fields are required.",
+  PASSWORDS_DO_NOT_MATCH: "Passwords don't match.",
+  USER_ALREADY_EXISTS: "User already exists with this email.",
+  REGISTRATION_PENDING_VERIFICATION: "User registration is pending verification.",
+  REGISTRATION_FAILED: "Registration failed. Please try again.",
+  AUTHENTICATION_FAILED: "Authentication failed.",
+ DEFAULT_ERROR:"An unexpected error occurs",
+  EMAIL_AND_OTP_REQUIRED: "Email and OTP are required.",
+  INVALID_OTP_OR_EXPIRED: "Invalid OTP or OTP expired.",
+  LOGIN_FAILED: "Invalid credentials.",
+  ACCOUNT_BLOCKED: "Access denied: Your account has been blocked. Please contact support for assistance.",
+  EMAIL_REQUIRED: "Email is required.",
+  OTP_RESEND_FAILED: "Failed to resend OTP.",
+  LOGOUT_FAILED: "An unexpected error occurred during logout.",
+  UNAUTHORIZED: "Unauthorized: User ID not found.",
+  USER_NOT_FOUND: "User not found.",
+  UPDATE_FAILED: "An error occurred while updating user details.",
+  MISSING_UPDATE_FIELDS: "At least one field (name or profile picture) must be provided for update.",
+  FORGOT_PASSWORD_FAILED:"failed to send forgotpassowrd verification ",
+  INVALID_OR_EXPIRED_OTP:"Invalid otp orotp expired ",
+  RESET_PASSWORD_FAILED:"failed to reset password"
+};
 
-  };
-  
-  export const SuccessMessages = {
-    CLASSROOM_CREATED: "Classroom created successfully.",
-    JOINED_CLASSROOM: "Successfully joined the classroom.",
-    INVITATION_SENT: (email: string) => `Invitation sent to ${email}.`,
-    CLASSROOM_FETCHED: "Classroom fetched successfully.",
-    MEMBERS_FETCHED: "Classroom members fetched successfully",
+export const SuccessMessages = {
+  // ClassroomController success messages
+  INVITE_CODE_VALID: "Successfully validated room.",
+  CLASSROOM_CREATED: "Classroom created successfully.",
+  JOINED_CLASSROOM: "Successfully joined the classroom.",
+  INVITATION_SENT: (email: string) => `Invitation sent to ${email}.`,
+  CLASSROOM_FETCHED: "Classroom fetched successfully.",
+  MEMBERS_FETCHED: "Classroom members fetched successfully.",
+  PASSWORD_RESET_SUCESSFULY:"password reset sucessfully",
+  PASSWORD_RESET_OTP:"password reset otp sent sucessfully",
 
-  };
-  
-  export const GenericMessages = {
-    INVITE_EMAIL: (inviteLink: string) =>
-      `Hello, you have been invited to join the classroom. Use this link to join: ${inviteLink}`,
-    DEFAULT_ERROR: "An unexpected error occurred",
+  // AuthController success messages
+  USER_REGISTERED: "User registered successfully. Please check your email for OTP.",
+  USER_VERIFIED: "User verified successfully.",
+  OTP_SENT: "New OTP sent successfully.",
+  LOGIN_SUCCESSFUL: "Login successful.",
+  LOGOUT_SUCCESSFUL: "Logout successful.",
+  USER_UPDATED: "User details updated successfully.",
+};
 
-  };
-  
+export const GenericMessages = {
+  // ClassroomController generic messages
+  INVITE_EMAIL: (inviteLink: string) =>
+    `Hello, you have been invited to join the classroom. Use this link to join: ${inviteLink}`,
+  DEFAULT_ERROR: "An unexpected error occurred.",
+
+  // AuthController generic messages
+  REGISTRATION_EMAIL_SUBJECT: "Welcome! Verify Your Email",
+  OTP_EMAIL_SUBJECT: "Your OTP Code",
+};

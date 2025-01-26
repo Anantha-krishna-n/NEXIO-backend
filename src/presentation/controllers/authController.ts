@@ -4,7 +4,12 @@ import { User as UserModel } from "../../entites/User";
 import { UserService } from "../../services/UserService";
 import { Token } from "../../external/Token";
 import { Mailer } from "../../external/Mailer";
-// const userService = new UserService();
+import { HttpStatusCode } from "../utils/HttpStatusCode";
+import {
+  ErrorMessages,
+  SuccessMessages,
+  GenericMessages,
+} from "../utils/Constants";
 
 export class authController {
   private authService: IUserAuth;
@@ -21,8 +26,8 @@ export class authController {
       console.log("cred", name, email, password, confirmPassword);
 
       if (!name || !email || !password || !confirmPassword) {
-        return res.status(400).json({
-          error: "All fields are required",
+        return res.status(HttpStatusCode.BAD_REQUEST).json({
+          error: ErrorMessages.ALL_FIELDS_REQUIRED,
           missingFields: {
             name: !name,
             email: !email,
@@ -33,7 +38,9 @@ export class authController {
       }
 
       if (password !== confirmPassword) {
-        return res.status(400).json({ error: "Passwords don't match" });
+        return res
+          .status(HttpStatusCode.BAD_REQUEST)
+          .json({ error: ErrorMessages.PASSWORDS_DO_NOT_MATCH });
       }
 
       const existingUser = await this.authService.findUserByEmail(email);
@@ -41,26 +48,26 @@ export class authController {
       if (existingUser) {
         if (existingUser.verified) {
           return res
-            .status(409)
-            .json({ error: "User already exists with this email" });
+          .status(HttpStatusCode.CONFLICT)
+          .json({ error: ErrorMessages.USER_ALREADY_EXISTS });
         }
-        return res
-          .status(409)
-          .json({ error: "User registration is pending verification" });
+       return res
+          .status(HttpStatusCode.CONFLICT)
+          .json({ error: ErrorMessages.REGISTRATION_PENDING_VERIFICATION });
       }
 
       const user = await this.authService.registerUser(name, email, password);
       return res
-        .status(201)
+        .status(HttpStatusCode.CREATED)
         .json({
           message:
-            "User registered successfully. Please check your email for OTP.",
+            SuccessMessages.USER_REGISTERED,
         });
     } catch (error) {
       console.error("Registration error:", error);
       return res
-        .status(500)
-        .json({ error: "Registration failed. Please try again." });
+      .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+      .json({ error: ErrorMessages.REGISTRATION_FAILED });
     }
   }
   async authCallbackController(
@@ -74,8 +81,11 @@ export class authController {
       const user = req.user as any
       
       if (!user) {
-        return res.status(401).json({message: "Authentication failed"})
+        return res
+          .status(HttpStatusCode.UNAUTHORIZED)
+          .json({ message: ErrorMessages.AUTHENTICATION_FAILED });
       }
+
       const {accessToken, refreshToken} = this.tokenService.generateTokens(
         user._id
       )
@@ -117,22 +127,29 @@ export class authController {
   async onVerifyUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, otp } = req.body;
+      console.log("Email:", email, "OTP:", otp); 
 
-      if (!email || !otp) {
-        return res.status(400).json({ error: "Email and OTP are required" });
+      
+         if (!email || !otp) {
+        return res
+          .status(HttpStatusCode.BAD_REQUEST)
+          .json({ error: ErrorMessages.EMAIL_AND_OTP_REQUIRED });
       }
+
       const verifiedUser = await this.authService.verifyUser(email, otp);
 
       if (!verifiedUser) {
-        return res.status(400).json({ error: "Invalid OTP or OTP expired" });
+        return res
+          .status(HttpStatusCode.BAD_REQUEST)
+          .json({ error: ErrorMessages.INVALID_OTP_OR_EXPIRED });
       }
 
-      return res.json({ message: "User verified successfully" });
+      return res.json({ message: SuccessMessages.USER_VERIFIED });
     } catch (error) {
       console.error("Verification error:", error);
       return res
-        .status(500)
-        .json({ error: "An error occurred during verification" });
+      .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+      .json({ error: ErrorMessages.AUTHENTICATION_FAILED });
     }
   }
   async onResendOTP(req: Request, res: Response, next: NextFunction) {
@@ -140,13 +157,18 @@ export class authController {
       const { email } = req.body;
 
       if (!email) {
-        return res.status(400).json({ error: "Email is required" });
+        return res
+          .status(HttpStatusCode.BAD_REQUEST)
+          .json({ error: ErrorMessages.EMAIL_REQUIRED });
       }
+
       await this.authService.resendOTP(email);
-      return res.json({ message: "New OTP sent successfully" });
+      return res.json({ message: SuccessMessages.OTP_SENT });
     } catch (error) {
       console.error("Resend OTP error:", error);
-      return res.status(500).json({ error: "Failed to resend OTP" });
+      return res
+      .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+      .json({ error: ErrorMessages.OTP_RESEND_FAILED });
     }
   }
  
@@ -154,20 +176,21 @@ export class authController {
     try {
       const { email, password } = req.body;
       console.log("cred", email, password);
-      if (!email || !password) {
+
+  if (!email || !password) {
         return res
-          .status(400)
-          .json({ error: "Email and password are required" });
+          .status(HttpStatusCode.BAD_REQUEST)
+          .json({ error: ErrorMessages.ALL_FIELDS_REQUIRED });
       }
   
       const user = await this.authService.loginUser(email, password);
       console.log("controller user", user?._id);
       if (!user) {
-        return res.status(401).json({ error: "Invalid credentials" });
+        return res.status(HttpStatusCode.UNAUTHORIZED).json({ error:ErrorMessages.LOGIN_FAILED });
       }  
       
       if (user.isBlocked) {
-        return res.status(403).json({ error: "Access denied: Your account has been blocked. Please contact support for assistance." });
+        return res.status(HttpStatusCode.FORBIDDEN).json({ error:  ErrorMessages.ACCOUNT_BLOCKED });
       } 
       const tokens = this.tokenService.generateTokens(user._id);
       res.cookie("accessToken", tokens.accessToken, {
@@ -198,7 +221,7 @@ export class authController {
       });
     } catch (error) {
       console.error("Login error:", error);
-      return res.status(500).json({ error: "An unexpected error occurred" });
+      return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({ error:  ErrorMessages.DEFAULT_ERROR });
     }
   }
   async onLogoutUser(req: Request, res: Response, next: NextFunction) {
@@ -219,17 +242,17 @@ export class authController {
       });
     } catch (error) {
       console.error("Logout error:", error);
-      return res.status(500).json({ error: "An unexpected error occurred during logout" });
+      return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({  error: ErrorMessages.LOGOUT_FAILED});
     }
   }
  async getUserById(req: Request, res: Response) {
     const { userId } = req.params;
     try {
-      const user = await this.authService.findUserById(userId); // Call updated method
-      res.status(200).json(user);
+      const user = await this.authService.findUserById(userId); 
+      res.status(HttpStatusCode.OK).json(user);
     } catch (error) {
       const err = error as Error;
-      res.status(400).json({ error: err.message });
+      res.status(HttpStatusCode.BAD_REQUEST).json({ error: err.message });
     }
   }
   async updateUserDetails(req: Request, res: Response, next: NextFunction) {
@@ -237,37 +260,33 @@ export class authController {
       const userId = req.userId; 
       const { name, profilepic } = req.body;
 
-      // Validate inputs
       if (!userId) {
-        return res.status(401).json({ 
+        return res.status(HttpStatusCode.UNAUTHORIZED).json({ 
           success: false,
-          error: "Unauthorized: User ID not found" 
+          error: ErrorMessages.UNAUTHORIZED
         });
       }
 
       if (!name && !profilepic) {
-        return res.status(400).json({
+        return res.status(HttpStatusCode.BAD_REQUEST).json({
           success: false,
-          error: "At least one field (name or profile picture) must be provided for update"
+          error: ErrorMessages.ALL_FIELDS_REQUIRED
         });
       }
-      // Create update object with only provided fields
       const updateData: { name?: string; profilepic?: string } = {};
       if (name) updateData.name = name;
       if (profilepic) updateData.profilepic = profilepic;
 
-      // Update user
       const updatedUser = await this.authService.updateUserDetails(userId, updateData);
 
       if (!updatedUser) {
-        return res.status(404).json({
+        return res.status(HttpStatusCode.NOT_FOUND).json({
           success: false,
-          error: "User not found"
+          error: ErrorMessages.USER_NOT_FOUND,
         });
       }
 
-      // Return success response
-      return res.status(200).json({
+      return res.status(HttpStatusCode.OK).json({
         success: true,
         message: "User details updated successfully",
         user: {
@@ -280,11 +299,55 @@ export class authController {
 
     } catch (error) {
       console.error("Error updating user details:", error);
-      return res.status(500).json({
+      return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        error: "An error occurred while updating user details"
+        error: ErrorMessages.UPDATE_FAILED
       });
     }
   }
- 
+  async onForgotPasswordRequest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email } = req.body;
+  
+      if (!email) {
+        return res.status(HttpStatusCode.BAD_REQUEST).json({ error: ErrorMessages.EMAIL_REQUIRED });
+      }
+  
+      const success = await this.authService.forgotPasswordRequest(email);
+  
+      if (!success) {
+        return res.status(HttpStatusCode.NOT_FOUND).json({ error: ErrorMessages.USER_NOT_FOUND });
+      }
+  
+      return res.status(HttpStatusCode.OK).json({ message: SuccessMessages.PASSWORD_RESET_SUCESSFULY });
+    } catch (error) {
+      console.error("Forgot password request error:", error);
+      return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({ error: ErrorMessages.FORGOT_PASSWORD_FAILED});
+    }
+  }
+  
+  async onResetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, otp, newPassword, confirmPassword } = req.body;
+  
+      if (!email || !otp || !newPassword || !confirmPassword) {
+        return res.status(HttpStatusCode.BAD_REQUEST).json({ error:  ErrorMessages.ALL_FIELDS_REQUIRED });
+      }
+  
+      if (newPassword !== confirmPassword) {
+        return res.status(HttpStatusCode.BAD_REQUEST).json({ error:  ErrorMessages.ALL_FIELDS_REQUIRED });
+      }
+  
+      const success = await this.authService.resetPassword(email, otp, newPassword);
+  
+      if (!success) {
+        return res.status(HttpStatusCode.BAD_REQUEST).json({ error: ErrorMessages.INVALID_OR_EXPIRED_OTP });
+      }
+  
+      return res.status(HttpStatusCode.OK).json({ message: SuccessMessages.PASSWORD_RESET_SUCESSFULY });
+    } catch (error) {
+      console.error("Password reset error:", error);
+      return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({ error:  ErrorMessages.RESET_PASSWORD_FAILED });
+    }
+  }
 }
