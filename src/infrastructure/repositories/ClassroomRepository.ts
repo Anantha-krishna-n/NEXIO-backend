@@ -111,7 +111,24 @@ async getClassroomWithMembers(classroomId: string): Promise<Classroom | null> {
   console.log('Fetched classroom members:', classroom.members);
   return classroom;
 }
+async getUserClassroomsCounts(userId: string): Promise<{ publicCount: number; privateCount: number }> {
+  try {
+    const classrooms = await ClassroomModel.find({
+      $or: [
+        { admin: new Types.ObjectId(userId) },
+        { 'members.user': new Types.ObjectId(userId) }
+      ]
+    }).lean();
 
+    const publicCount = classrooms.filter(classroom => classroom.type === 'public').length;
+    const privateCount = classrooms.filter(classroom => classroom.type === 'private').length;
+
+    return { publicCount, privateCount };
+  } catch (error) {
+    console.error('Error in getUserClassroomsCounts:', error);
+    throw error;
+  }
+}
 }
 
 

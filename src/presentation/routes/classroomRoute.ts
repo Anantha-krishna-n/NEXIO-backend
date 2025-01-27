@@ -24,5 +24,5 @@ router.get('/:roomId/members', refreshTokenHandler, controller.getClassroomMembe
 router.post('/:classroomId/invite', refreshTokenHandler, checkIfBlocked, controller.inviteUserToClassroom.bind(controller));
 router.get('/invite/:inviteCode', controller.joinClassroomWithInvite.bind(controller));
 router.get('/validate-invite/:inviteCode', controller.validateInviteCode.bind(controller));
-
+router.get('/count',refreshTokenHandler,controller.getUserClassroomsCounts.bind(controller));
   export default router;

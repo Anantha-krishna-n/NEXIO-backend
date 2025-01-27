@@ -311,4 +311,28 @@ export class ClassroomController {
         .json({ error: err.message || ErrorMessages.FAILED_TO_VALIDATE_INVITE });
     }
   }
+  async getUserClassroomsCounts(req: Request, res: Response) {
+    try {
+      console.log("hello")
+        const userId = req.userId;
+
+        if (!userId) {
+            return res
+                .status(HttpStatusCode.BAD_REQUEST)
+                .json({ error: ErrorMessages.REQUIRED_FIELDS });
+        }
+
+        const counts = await this.classroomService.getUserClassroomsCounts(userId);
+
+        res.status(HttpStatusCode.OK).json({
+            message: "sucss",
+            counts,
+        });
+    } catch (error) {
+        console.error('Error getting classroom counts:', error);
+        res
+            .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+            .json({ error: "error" });
+    }
+}
 }

@@ -41,7 +41,6 @@ export const refreshTokenHandler = async (
         console.log(payload.userId, "user");
 
         if (payload.userId) {
-          // Generate new tokens
           const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
             tokenService.generateTokens(payload.userId);
 
@@ -54,7 +53,7 @@ export const refreshTokenHandler = async (
           res.cookie("refreshToken", newRefreshToken, {
             httpOnly: true,
             secure: true,
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            maxAge: 7 * 24 * 60 * 60 * 1000, 
           });
 
           req.userId = payload.userId

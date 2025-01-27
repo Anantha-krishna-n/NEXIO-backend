@@ -111,5 +111,8 @@ async getClassroomInviteLink(classroomId: string): Promise<string | null> {
   }
   return classroom.inviteLink || null;
 }
+async getUserClassroomsCounts(userId: string): Promise<{ publicCount: number; privateCount: number }> {
+  return await this.classroomRepository.getUserClassroomsCounts(userId);
+}
 
 }

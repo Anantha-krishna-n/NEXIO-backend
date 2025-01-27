@@ -51,6 +51,7 @@ cron.schedule("0 0 * * *", async () => {
 
 app.use(passport.initialize());
 app.use(passport.session())
+app.use('/uploads', express.static('public/uploads'));
 
 app.use('/auth',authRoutes)
 app.use('/classroom',classroomRoute)

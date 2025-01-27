@@ -6,6 +6,7 @@ import {refreshTokenHandler } from "../middlewares/TokenMiddleware"
 import {checkIfBlocked} from "../middlewares/userValidate"
 import passport from "passport"
 import { Check } from "../middlewares/Checking"
+import { upload } from "../middlewares/uploadMiddleware"
 
 const repository = new UserRepository()
 const auth = new UserService(repository)
