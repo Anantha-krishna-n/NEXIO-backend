@@ -162,15 +162,7 @@ export class UserService implements IUserAuth {
   
   async resetPassword(email: string, otp: string, newPassword: string): Promise<boolean> {
     const user = await this.findUserByEmail(email);
-    
-    if (!user || !user.otp || !user.otpExpires) {
-      return false;
-    }
-  
-    if (user.otp !== otp || user.otpExpires < new Date()) {
-      return false;
-    }
-  
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
   
     await this.userRepository.updateUser(email, { 

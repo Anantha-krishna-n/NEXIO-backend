@@ -329,12 +329,13 @@ export class authController {
   async onResetPassword(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, otp, newPassword, confirmPassword } = req.body;
-  
+
       if (!email || !otp || !newPassword || !confirmPassword) {
         return res.status(HttpStatusCode.BAD_REQUEST).json({ error:  ErrorMessages.ALL_FIELDS_REQUIRED });
       }
   
       if (newPassword !== confirmPassword) {
+      
         return res.status(HttpStatusCode.BAD_REQUEST).json({ error:  ErrorMessages.ALL_FIELDS_REQUIRED });
       }
   
