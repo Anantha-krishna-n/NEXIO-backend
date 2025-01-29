@@ -21,7 +21,6 @@ export const refreshTokenHandler = async (
       return res.status(401).json({ error: "Please log in again" });
     }
 
-    
     if (accessToken) {
       try {
         const payload = tokenService.verifyAccessToken(accessToken);
@@ -34,7 +33,6 @@ export const refreshTokenHandler = async (
       }
     }
  
-  
     if (refreshToken) {
       try {
         const payload = tokenService.verifyRefreshToken(refreshToken);

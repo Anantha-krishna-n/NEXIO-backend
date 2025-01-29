@@ -13,6 +13,5 @@ export interface IClassroomRepository {
     ): Promise<{ classrooms: Classroom[]; total: number }>; 
     getClassroomWithMembers(classroomId: string): Promise<Classroom | null>;
     getUserClassroomsCounts(userId:string): Promise<{publicCount:number,privateCount:number}>
-    // getUserClassroomsCounts(userId: string): Promise<{ publicCount: number; privateCount: number }>
 
    }

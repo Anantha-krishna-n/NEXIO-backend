@@ -49,6 +49,21 @@ export class adminController{
         res.status(500).json({ error: "Failed to fetch users" });
       }
     }
+    async adminLogout(req: Request, res: Response) {
+      try {
+        console.log("here in the admin")
+        res.clearCookie("adminToken", {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+        });
+  
+        return res.status(200).json({ message: "Admin logged out successfully" });
+      } catch (error) {
+        console.error("Error in adminLogout:", error);
+        return res.status(500).json({ error: "Failed to log out admin" });
+      }
+    }
     async toggleUserBlockStatus(req: Request, res: Response) {
       try {
           const userId = req.params.id;
@@ -73,7 +88,7 @@ export class adminController{
               message: `User has been ${isBlocked ? "blocked" : "unblocked"} successfully`,
               user: updatedUser,
           });
-  
+           
       } catch (error) {
           console.error("Error in toggleUserBlockStatus:", error);
           res.status(500).json({ error: "Failed to update user status" });

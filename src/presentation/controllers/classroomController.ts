@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 
 import { ClassroomService } from "../../services/ClassroomSerivice";
 import jwt from "jsonwebtoken";
@@ -311,9 +311,8 @@ export class ClassroomController {
         .json({ error: err.message || ErrorMessages.FAILED_TO_VALIDATE_INVITE });
     }
   }
-  async getUserClassroomsCounts(req: Request, res: Response) {
+  async getUserClassrooms(req: Request, res: Response) {
     try {
-      console.log("hello")
         const userId = req.userId;
 
         if (!userId) {
@@ -322,14 +321,14 @@ export class ClassroomController {
                 .json({ error: ErrorMessages.REQUIRED_FIELDS });
         }
 
-        const counts = await this.classroomService.getUserClassroomsCounts(userId);
-
+        const counts = await this.classroomService.getUserClassrooms(userId);
+ 
         res.status(HttpStatusCode.OK).json({
             message: "sucss",
             counts,
         });
     } catch (error) {
-        console.error('Error getting classroom counts:', error);
+        console.error('Error getting classroom counts:', error); 
         res
             .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
             .json({ error: "error" });
