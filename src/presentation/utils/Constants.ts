@@ -14,6 +14,7 @@ export const ErrorMessages = {
   BAD_REQUEST: "Bad Request.",
   REQUIRED_CLASSROOM_ID_AND_EMAIL: "Classroom ID and email are required.",
   REQUIRED_INVITE_CODE_OR_USER_ID: "Invite code and user ID are required.",
+  FAILED_TO_SEND_MESSAGE:"failed to send message",
 
   // AuthController errors
   ALL_FIELDS_REQUIRED: "All fields are required.",
@@ -36,7 +37,19 @@ export const ErrorMessages = {
   MISSING_UPDATE_FIELDS: "At least one field (name or profile picture) must be provided for update.",
   FORGOT_PASSWORD_FAILED:"failed to send forgotpassowrd verification ",
   INVALID_OR_EXPIRED_OTP:"Invalid otp orotp expired ",
-  RESET_PASSWORD_FAILED:"failed to reset password"
+  RESET_PASSWORD_FAILED:"failed to reset password",
+  AILED_TO_FETCH_MESSAGES:"failed to fetch messages",
+
+
+
+  FAILED_TO_FETCH_WHITEBOARD:"failed to fetch the whiteboard",
+  WHITEBOARD_NOT_FOUND:"cannot find the white board",
+  FAILED_TO_INITIALIZE_WHITEBOARD:"failed to intialize the whiteboard",
+  FAILED_TO_UPDATE_WHITEBOARD:"failed to update the whiteboard",
+
+
+
+
 };
 
 export const SuccessMessages = {
@@ -57,6 +70,14 @@ export const SuccessMessages = {
   LOGIN_SUCCESSFUL: "Login successful.",
   LOGOUT_SUCCESSFUL: "Logout successful.",
   USER_UPDATED: "User details updated successfully.",
+  MESSAGE_SENT:"message sent sucessfully",
+
+
+  WHITEBOARD_FETCHED:"fetched whiteboard sucessfully",
+  WHITEBOARD_INITIALIZED:"white board intialize",
+  WHITEBOARD_UPDATED:"whiteboard updated sucessfully",
+
+
 };
 
 export const GenericMessages = {

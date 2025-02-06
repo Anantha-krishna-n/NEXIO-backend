@@ -5,58 +5,74 @@ import { Types } from "mongoose";
 
 export class ClassroomRepository implements IClassroomRepository {
   async create(classroomData: Partial<Classroom>): Promise<Classroom> {
-    const classroom = new ClassroomModel(classroomData);
-    await classroom.save();
-    return classroom.toObject();
-  }
-  async getPublicClassrooms(): Promise<Classroom[]> {
-    const publicClassrooms = await ClassroomModel.find({ type: 'public' })
-      .populate({
-        path: 'admin',
-        select: 'name email profile'  
-      })
-      .lean();
-    return publicClassrooms;
-  }
-  async getById(classroomId: string): Promise<Classroom | null> {
-    return await ClassroomModel.findById(classroomId)
-      .populate('admin', 'name email profile')
-      .populate('members.user', 'name email profile')
-      .lean();
-  }
-  async addMember(classroomId: string, userId: string, isInvited: boolean = false): Promise<Classroom> {
-    const classroom = await ClassroomModel.findById(classroomId);
-    if (!classroom) {
-      throw new Error("Classroom not found.");
-    }
-
-    const isAdmin = classroom.admin.toString() === userId;
-    const role = isAdmin ? "admin" : "participant";
-
-    // Check if user is already a member
-    const existingMember = classroom.members.find(
-      member => member.user.toString() === userId
-    );
-    if (existingMember) {
+    try {
+      const classroom = new ClassroomModel(classroomData);
+      await classroom.save();
       return classroom.toObject();
+    } catch (error) {
+      console.error("Error creating classroom:", error);
+      throw new Error("Failed to create classroom.");
     }
-
-    
-    if (classroom.type === "private" && !isAdmin && !isInvited) {
-      throw new Error("Only admin can join this private classroom without an invite.");
-    }
-
-    classroom.members.push({ user: new Types.ObjectId(userId), role });
-    await classroom.save();
-
-    // Return populated classroom data
-    const updatedClassroom = await ClassroomModel.findById(classroomId)
-      .populate('admin', 'name email profile')
-      .populate('members.user', 'name email profile')
-      .lean();
-
-    return updatedClassroom as Classroom;
   }
+  
+  async getPublicClassrooms(): Promise<Classroom[]> {
+    try {
+      return await ClassroomModel.find({ type: 'public' })
+        .populate({ path: 'admin', select: 'name email profile' })
+        .lean();
+    } catch (error) {
+      console.error("Error fetching public classrooms:", error);
+      throw new Error("Failed to fetch public classrooms.");
+    }
+  }
+
+  async getById(classroomId: string): Promise<Classroom | null> {
+    try {
+      return await ClassroomModel.findById(classroomId)
+        .populate('admin', 'name email profile')
+        .populate('members.user', 'name email profile')
+        .lean();
+    } catch (error) {
+      console.error("Error fetching classroom by ID:", error);
+      throw new Error("Failed to fetch classroom.");
+    }
+  }
+
+   async addMember(classroomId: string, userId: string, isInvited: boolean = false): Promise<Classroom> {
+    try {
+      const classroom = await ClassroomModel.findById(classroomId);
+      if (!classroom) {
+        throw new Error("Classroom not found.");
+      }
+
+      const isAdmin = classroom.admin.toString() === userId;
+      const role = isAdmin ? "admin" : "participant";
+
+      const existingMember = classroom.members.find(
+        member => member.user.toString() === userId
+      );
+      if (existingMember) {
+        return classroom.toObject();
+      }
+
+      if (classroom.type === "private" && !isAdmin && !isInvited) {
+        throw new Error("Only admin can join this private classroom without an invite.");
+      }
+
+      classroom.members.push({ user: new Types.ObjectId(userId), role });
+      await classroom.save();
+
+      return await ClassroomModel.findById(classroomId)
+        .populate('admin', 'name email profile')
+        .populate('members.user', 'name email profile')
+        .lean() as Classroom;
+    } catch (error) {
+      console.error("Error adding member to classroom:", error);
+      throw new Error("Failed to add member to classroom.");
+    }
+  }
+
+
 async getPrivateClassroomsCreatedByUser(
   adminId: string, 
   page: number = 1, 
@@ -91,26 +107,36 @@ async getPrivateClassroomsCreatedByUser(
     throw error;
   }
 }
-async getByInviteCode(inviteCode: string): Promise<Classroom | null> {
-  return await ClassroomModel.findOne({ inviteCode })
-    .populate('admin', 'name email profile')
-    .populate('members.user', 'name email profile')
-    .lean();
-}
-async getClassroomWithMembers(classroomId: string): Promise<Classroom | null> {
-  const classroom = await ClassroomModel.findById(classroomId)
-    .populate('admin', 'name email profilepic')
-    .populate('members.user', 'name email profilepic')
-    .lean();
-
-  if (!classroom) {
-    console.error('Classroom not found:', classroomId);
-    return null;
+  async getByInviteCode(inviteCode: string): Promise<Classroom | null> {
+    try {
+      return await ClassroomModel.findOne({ inviteCode })
+        .populate('admin', 'name email profile')
+        .populate('members.user', 'name email profile')
+        .lean();
+    } catch (error) {
+      console.error("Error fetching classroom by invite code:", error);
+      throw new Error("Failed to fetch classroom.");
+    }
   }
+  async getClassroomWithMembers(classroomId: string): Promise<Classroom | null> {
+    try {
+      const classroom = await ClassroomModel.findById(classroomId)
+        .populate('admin', 'name email profilepic')
+        .populate('members.user', 'name email profilepic')
+        .lean();
 
-  console.log('Fetched classroom members:', classroom.members);
-  return classroom;
-}
+      if (!classroom) {
+        console.error("Classroom not found:", classroomId);
+        return null;
+      }
+
+      console.log("Fetched classroom members:", classroom.members);
+      return classroom;
+    } catch (error) {
+      console.error("Error fetching classroom with members:", error);
+      throw new Error("Failed to fetch classroom members.");
+    }
+  }
 async getUserClassroomsCounts(userId: string): Promise<{ publicCount: number; privateCount: number }> {
   try {
     const classrooms = await ClassroomModel.find({

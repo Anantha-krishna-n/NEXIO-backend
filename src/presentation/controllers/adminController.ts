@@ -38,7 +38,7 @@ export class adminController{
           return res.status(400).json({ error: "Invalid page or limit value" });
         }
         const { users, total } = await userRepository.getAllUsers(page, limit);
-
+       console.log(users,"admn")
         res.status(200).json({
           users,
           totalUsers: total,
@@ -82,7 +82,7 @@ export class adminController{
   
           // Toggle block status
           const updatedUser = await userRepository.toggleBlockStatus(userId, isBlocked);
-  
+           console.log(updatedUser,"admin")
           // Send response
           res.status(200).json({
               message: `User has been ${isBlocked ? "blocked" : "unblocked"} successfully`,

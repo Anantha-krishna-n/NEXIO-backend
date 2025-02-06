@@ -11,15 +11,33 @@ import { connectToDatabase } from "./infrastructure/databse/connection-config"
 import authRoutes from "./presentation/routes/authRoutes"
 import adminRoutes from "./presentation/routes/adminRoutes"
 import classroomRoute from "./presentation/routes/classroomRoute"
-
+import messageRoute from "./presentation/routes/messageRoutes"
+import whiteboardRoute from "./presentation/routes/whiteboardRoutes"
+import logger from "./presentation/middlewares/logger";
 import { cleanupUnverifiedUsers } from "./presentation/utils/cleanupUnverifiedUsers";
 import cron from "node-cron";
+import http, { createServer } from "http"
+import { Server } from "socket.io"
+import { Socket } from "dgram"
+import { setupSocketIO } from "./socket"
 
 
 
+const app: Application = express();
+const server=createServer(app)
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:3000  ', 
+    methods: ["GET", "POST"],
+    credentials: true,
+    
+  },
+});
 
-const app = express()
+
+setupSocketIO(io)
 app.use(express.json());
+app.use(logger);
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser())
 
@@ -55,16 +73,16 @@ app.use('/uploads', express.static('public/uploads'));
 
 app.use('/auth',authRoutes)
 app.use('/classroom',classroomRoute)
-  
-
-
 app.use("/admin", adminRoutes);
+app.use("/messages",messageRoute)
+app.use("/whiteboard",whiteboardRoute)
+
 
 const port= process.env.PORT || 5000
 
-connectToDatabase()
+connectToDatabase() 
   .then(() => {
-    app.listen(port, () => {
+    server.listen(port, () => {
       console.log(`Server is running on :${port}`);
     });
   })

@@ -1,5 +1,6 @@
-import { profile } from 'console';
+import { profile, timeStamp } from 'console';
 import mongoose, { Schema, Model } from 'mongoose';
+import { string } from 'zod';
 
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -18,6 +19,7 @@ const UserSchema = new mongoose.Schema({
   otpExpires: { type: Date },
   verified:{type:Boolean , required:true , default:false},
   isBlocked:{type:Boolean,required:true,default:false},
+  createdAt:{type:String,required:true,}
 });
 ;
 
