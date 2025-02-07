@@ -12,6 +12,7 @@ export const setupSocketIO = (io: Server) => {
 
     socket.on("sendMessage", (classroomId: string, message: any) => {
       io.to(classroomId).emit("receiveMessage", {
+        _id: message._id,
         userId: message.userId,
         userName: message.userName, 
         message: message.message,
