@@ -13,6 +13,7 @@ import adminRoutes from "./presentation/routes/adminRoutes"
 import classroomRoute from "./presentation/routes/classroomRoute"
 import messageRoute from "./presentation/routes/messageRoutes"
 import whiteboardRoute from "./presentation/routes/whiteboardRoutes"
+import documentRoute from "./presentation/routes/documentRoute"
 import logger from "./presentation/middlewares/logger";
 import { cleanupUnverifiedUsers } from "./presentation/utils/cleanupUnverifiedUsers";
 import cron from "node-cron";
@@ -20,6 +21,8 @@ import http, { createServer } from "http"
 import { Server } from "socket.io"
 import { Socket } from "dgram"
 import { setupSocketIO } from "./socket"
+import { errorHandler } from "./presentation/middlewares/errorMiddleware";
+
 
 
 
@@ -76,7 +79,10 @@ app.use('/classroom',classroomRoute)
 app.use("/admin", adminRoutes);
 app.use("/messages",messageRoute)
 app.use("/whiteboard",whiteboardRoute)
+app.use("/document",documentRoute)
 
+
+app.use(errorHandler);
 
 const port= process.env.PORT || 5000
 

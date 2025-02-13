@@ -11,6 +11,7 @@ export class WhiteboardController {
   }
 
   async initializeWhiteboard(req: Request, res: Response, next: NextFunction) {
+    console.log("inside the whiteboard...1")
     try {
       const { classroomId } = req.params;
       if (!classroomId) {
@@ -24,6 +25,8 @@ export class WhiteboardController {
   }
 
   async getWhiteboard(req: Request, res: Response, next: NextFunction) {
+    console.log("inside the whiteboard...2")
+
     try {
       const { classroomId } = req.params;
       if (!classroomId) {
@@ -40,6 +43,8 @@ export class WhiteboardController {
   }
 
   async updateWhiteboard(req: Request, res: Response, next: NextFunction) {
+    console.log("inside the whiteboard...3")
+
     try {
       const { classroomId } = req.params;
       const { elements } = req.body;

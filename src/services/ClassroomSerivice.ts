@@ -1,6 +1,7 @@
 import { ClassroomRepository } from "../infrastructure/repositories/ClassroomRepository";
 import { IClassroomRepository } from "../interfaces/repositories/IClassroomRepository";
 import { Classroom } from "../entites/classroom";
+import { SUBSCRIPTION_LIMITS } from "../external/SUBSCRIPTION_LIMITS";
 import { Types } from "mongoose";
 
 export class ClassroomService{
@@ -16,6 +17,9 @@ export class ClassroomService{
         type: 'public' | 'private',
         adminId: string
       ): Promise<Classroom> {
+
+
+        
         const schedule = new Date(date);
         const [hours, minutes] = time.split(':');
         schedule.setHours(parseInt(hours, 10), parseInt(minutes, 10));

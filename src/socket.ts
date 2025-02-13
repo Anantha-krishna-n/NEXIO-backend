@@ -20,7 +20,7 @@ export const setupSocketIO = (io: Server) => {
       });
     });;
 
-    socket.on("whiteboard-update", (data) => {
+    socket.on("whiteboard-update", (data:any) => {
       socket.to(data.roomId).emit("whiteboard-update", data.elements);
     });
     
