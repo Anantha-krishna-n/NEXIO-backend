@@ -86,5 +86,19 @@ export class UserRepository implements IUserRepository {
       { new: true }
     );
   }
+  async incrementUserField(userId: string, field: string, value: number): Promise<User | null> {
+    return await UserModel.findByIdAndUpdate(
+      userId,
+      { $inc: { [field]: value } }, 
+      { new: true }
+    );
+  }
+  async updateSubscriptionClassroomCount(userId: string, type: "public" | "private", decrement: boolean): Promise<User | null> {
+    const update = decrement 
+        ? { $inc: { [`subscription.availableClassroom.${type}`]: -1 } }
+        : { $inc: { [`subscription.availableClassroom.${type}`]: 1 } };
+
+    return await UserModel.findByIdAndUpdate(userId, update, { new: true });
+}
 
 }

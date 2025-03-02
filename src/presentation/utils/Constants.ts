@@ -47,6 +47,17 @@ export const ErrorMessages = {
   FAILED_TO_INITIALIZE_WHITEBOARD:"failed to intialize the whiteboard",
   FAILED_TO_UPDATE_WHITEBOARD:"failed to update the whiteboard",
 
+  FAILED_TO_CANCEL_SUBSCRIPTION:"failed to cancel the subscription",
+  FAILED_TO_FETCH_SUBSCRIPTION:"failed to fecth the subscription",
+  SUBSCRIPTION_NOT_FOUND:"cannot find the subscription",
+  FAILED_TO_CREATE_SUBSCRIPTION:"failed to create the subscription",
+
+
+
+  INVALID_SUBSCRIPTION_NAME: 'Invalid subscription name. Must be free, gold, or platinum',
+  FAILED_TO_FETCH_SUBSCRIPTIONS: 'Failed to fetch subscription plans',
+  FAILED_TO_UPDATE_SUBSCRIPTION: 'Failed to update subscription plan',
+  FAILED_TO_DELETE_SUBSCRIPTION: 'Failed to delete subscription plan',
 
 
 
@@ -76,6 +87,15 @@ export const SuccessMessages = {
   WHITEBOARD_FETCHED:"fetched whiteboard sucessfully",
   WHITEBOARD_INITIALIZED:"white board intialize",
   WHITEBOARD_UPDATED:"whiteboard updated sucessfully",
+
+  SUBSCRIPTION_CANCELLED:"subscription is canceled",
+  SUBSCRIPTION_CREATED:"subscription created sucesssfully",
+  SUBSCRIPTION_CONFIRM_SUCESSFULY:"subscription confirm sucessfully",
+
+
+  SUBSCRIPTION_UPDATED: 'Subscription plan updated successfully',
+  SUBSCRIPTION_DELETED: 'Subscription plan deleted successfully',
+
 
 
 };

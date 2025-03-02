@@ -12,6 +12,9 @@ export interface IUserRepository {
     toggleBlockStatus(userId: string, isBlocked: boolean): Promise<User | null>;
     getAllUsers(page: number, limit: number): Promise<{ users: User[]; total: number }>;
     findById(userId: string): Promise<any>;
+    incrementUserField(userId: string, field: string, value: number): Promise<User | null>;
+    updateSubscriptionClassroomCount(userId: string, type: "public" | "private", decrement: boolean): Promise<User | null>;
+
    
   }
   

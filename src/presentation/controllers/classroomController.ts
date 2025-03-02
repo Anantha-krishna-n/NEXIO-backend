@@ -20,7 +20,7 @@ export class ClassroomController {
 
   async createClassroom(req: Request, res: Response) {
     try {
-      console.log("Entered into classroom");
+      console.log("Entered into classroomcontroller");
       const { title, description, date, time, type } = req.body;
       const adminId = req.userId;
       console.log(adminId, "adminId ");
@@ -30,6 +30,13 @@ export class ClassroomController {
           .status(HttpStatusCode.BAD_REQUEST)
           .json({ error: ErrorMessages.REQUIRED_FIELDS });
       }
+      const avl = await this.classroomService.checkClassRoomAvl(adminId as string,type)
+      if(!avl.status){
+       return res
+        .status(HttpStatusCode.OK)
+        .json({ status:false,errorMsg:avl.msg });
+      }
+    
       const classroom = await this.classroomService.createClassroom(
         title,
         description,
@@ -41,11 +48,14 @@ export class ClassroomController {
       console.log("classroom", classroom);
       res
         .status(HttpStatusCode.CREATED)
-        .json({ message: SuccessMessages.CLASSROOM_CREATED, classroom });
-    } catch (error) {
-      res
-        .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
-        .json({ error: ErrorMessages.FAILED_TO_CREATE_CLASSROOM });
+        .json({status:true, message: SuccessMessages.CLASSROOM_CREATED, classroom });
+    } catch (error: any) {
+     
+      console.error("Error in createClassroom:", error.message);
+  
+     
+      res.status(HttpStatusCode.BAD_REQUEST).json({ error: error.message })
+      
     }
   }
 

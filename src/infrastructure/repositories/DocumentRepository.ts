@@ -17,6 +17,6 @@ export class DocumentRepository implements IDocumentRepository {
     const objectIdDocumentId = new Types.ObjectId(documentId);
     const result = await DocumentModel.findByIdAndDelete(objectIdDocumentId);
 
-    return !!result; // Return true if document was deleted, false otherwise
+    return !!result; 
   }
 }

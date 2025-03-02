@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { IUserAuth } from "../../interfaces/repositories/IUserAuth";
 import { User as UserModel } from "../../entites/User";
 import { UserService } from "../../services/UserService";
+import { SUBSCRIPTION_LIMITS } from "../../external/SUBSCRIPTION_LIMITS"; 
 import { Token } from "../../external/Token";
 import { Mailer } from "../../external/Mailer";
 import { HttpStatusCode } from "../utils/HttpStatusCode";
@@ -351,4 +352,77 @@ export class authController {
       return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({ error:  ErrorMessages.RESET_PASSWORD_FAILED });
     }
   }
+
+  async confirm_subscription(req: Request, res: Response, next: NextFunction) {
+    try {
+        console.log("confirmation.................................");
+
+        if (!req.userId) {
+            return res.status(HttpStatusCode.UNAUTHORIZED).json({
+                success: false,
+                error: ErrorMessages.UNAUTHORIZED
+            });
+        }
+
+        if (!req.body.paymentIntent || req.body.paymentIntent.status !== "succeeded") {
+            return res.status(HttpStatusCode.BAD_REQUEST).json({
+                success: false,
+                error: "Payment verification failed.",
+            });
+        }
+
+        console.log("payment 💕", req.body.paymentIntent);
+
+       
+        const plan = req.body.name as keyof typeof SUBSCRIPTION_LIMITS;
+
+        
+        if (!SUBSCRIPTION_LIMITS[plan]) {
+            return res.status(HttpStatusCode.BAD_REQUEST).json({
+                success: false,
+                error: "Invalid subscription plan.",
+            });
+        }
+
+       
+        const planLimits = SUBSCRIPTION_LIMITS[plan];
+
+      
+        const subscriptionUpdate = {
+            subscription: {
+                isActive: true,
+                startDate: new Date(),
+                endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+                plan,
+                availableClassroom: {
+                    public: planLimits.publicClassrooms,
+                    private: planLimits.privateClassrooms
+                }
+            }
+        };
+
+        console.log("📃📃", subscriptionUpdate.subscription);
+
+        const updatedData = await this.authService.updateUserDetails(
+            req.userId,
+            subscriptionUpdate
+        );
+
+        return res.status(HttpStatusCode.OK).json({
+            message: SuccessMessages.SUBSCRIPTION_CONFIRM_SUCESSFULY,
+            userData: updatedData,
+            remainingClassrooms: updatedData.subscription?.availableClassroom,
+            payment_info: req.body.paymentIntent
+        });
+
+    } catch (error) {
+        console.error("Subscription confirmation error:", error);
+        return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            error: "Failed to confirm subscription",
+        });
+    }
+}
+
+  
 }

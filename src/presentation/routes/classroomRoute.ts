@@ -2,13 +2,16 @@ import express, { NextFunction, Request, Response } from "express"
 
 import { ClassroomController } from "../controllers/classroomController"
 import { ClassroomRepository } from "../../infrastructure/repositories/ClassroomRepository"
+import { UserRepository } from "../../infrastructure/repositories/UserRepository";
+
 import { ClassroomService } from "../../services/ClassroomSerivice"
 import { refreshTokenHandler } from "../middlewares/TokenMiddleware"
 import {checkIfBlocked} from "../middlewares/userValidate"
 
 
 const repository=new ClassroomRepository()
-const classroom=new ClassroomService(repository)
+const userRepository=new UserRepository()
+const classroom=new ClassroomService(repository,userRepository)
 const controller=new ClassroomController(classroom)
 const router = express.Router() 
 

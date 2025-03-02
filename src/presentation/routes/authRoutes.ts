@@ -33,7 +33,7 @@ router.post('/login',controller.onLoginUser.bind(controller));
 router.post('/logout',controller.onLogoutUser.bind(controller))
 router.post('/forgot-password',controller.onForgotPasswordRequest.bind(controller))
 router.post('/reset-password',controller.onResetPassword.bind(controller))
-
+router.post('/confirm-subscription',refreshTokenHandler,controller.confirm_subscription.bind(controller))
 export default router;
 
 

@@ -14,6 +14,7 @@ import classroomRoute from "./presentation/routes/classroomRoute"
 import messageRoute from "./presentation/routes/messageRoutes"
 import whiteboardRoute from "./presentation/routes/whiteboardRoutes"
 import documentRoute from "./presentation/routes/documentRoute"
+import subscrpitionRoute from "./presentation/routes/subscriptionRoute"
 import logger from "./presentation/middlewares/logger";
 import { cleanupUnverifiedUsers } from "./presentation/utils/cleanupUnverifiedUsers";
 import cron from "node-cron";
@@ -80,6 +81,7 @@ app.use("/admin", adminRoutes);
 app.use("/messages",messageRoute)
 app.use("/whiteboard",whiteboardRoute)
 app.use("/document",documentRoute)
+app.use("/subscription",subscrpitionRoute)
 
 
 app.use(errorHandler);
