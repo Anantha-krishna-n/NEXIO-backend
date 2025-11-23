@@ -27,8 +27,14 @@ router.get(
   passport.authenticate('google', { session: false }),
   controller.authCallbackController.bind(controller)
 );
+router.patch(
+  "/updateProfile",
+  upload.single("profilepic"), 
+  refreshTokenHandler,controller.updateUserDetails.bind(controller)
+);
+
+
 router.get("/users/me", refreshTokenHandler, controller.onUserFind.bind(controller));
-router.patch("/updateProfile",refreshTokenHandler,controller.updateUserDetails.bind(controller))
 router.post('/login',controller.onLoginUser.bind(controller));
 router.post('/logout',controller.onLogoutUser.bind(controller))
 router.post('/forgot-password',controller.onForgotPasswordRequest.bind(controller))

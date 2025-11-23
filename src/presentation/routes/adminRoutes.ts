@@ -11,5 +11,6 @@ router.get('/userManagement',verifyAdminToken,adminCtrl.getAllUsers.bind(adminCt
 router.post("/logout",adminCtrl.adminLogout.bind(adminCtrl));
 
 router.put("/users/:id/toggle-block", verifyAdminToken, adminCtrl.toggleUserBlockStatus.bind(adminCtrl));
+router.get("/classroomstats", verifyAdminToken, adminCtrl.getClassroomStats.bind(adminCtrl));
 
 export default router;

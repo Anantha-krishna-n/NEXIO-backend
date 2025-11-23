@@ -15,6 +15,5 @@ export interface IUserRepository {
     incrementUserField(userId: string, field: string, value: number): Promise<User | null>;
     updateSubscriptionClassroomCount(userId: string, type: "public" | "private", decrement: boolean): Promise<User | null>;
 
-   
   }
   

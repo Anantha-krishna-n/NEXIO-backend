@@ -23,7 +23,7 @@ import { Server } from "socket.io"
 import { Socket } from "dgram"
 import { setupSocketIO } from "./socket"
 import { errorHandler } from "./presentation/middlewares/errorMiddleware";
-
+import path from "path"
 
 
 
@@ -73,7 +73,14 @@ cron.schedule("0 0 * * *", async () => {
 
 app.use(passport.initialize());
 app.use(passport.session())
-app.use('/uploads', express.static('public/uploads'));
+
+// Serve uploads directory
+const uploadDir = path.join(__dirname, "uploads");
+app.use("/uploads", express.static(uploadDir));
+
+// Serve public directory (for video call demo)
+const publicDir = path.join(__dirname, "../public");
+app.use(express.static(publicDir));
 
 app.use('/auth',authRoutes)
 app.use('/classroom',classroomRoute)

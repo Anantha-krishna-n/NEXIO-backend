@@ -4,6 +4,9 @@ import { IClassroomRepository } from "../../interfaces/repositories/IClassroomRe
 import { Types } from "mongoose";
 
 export class ClassroomRepository implements IClassroomRepository {
+  static getUserClassroomsCounts(arg0: string) {
+    throw new Error("Method not implemented.");
+  }
   async create(classroomData: Partial<Classroom>): Promise<Classroom> {
     try {
       const classroom = new ClassroomModel(classroomData);
@@ -155,6 +158,55 @@ async getUserClassroomsCounts(userId: string): Promise<{ publicCount: number; pr
     throw error;
   }
 }
+async getClassroomCountsPerMonth(): Promise<{ month: string; publicCount: number; privateCount: number }[]> {
+  try {
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5); 
+
+      const classroomCounts = await ClassroomModel.aggregate([
+          {
+              $match: {
+                  createdAt: { $gte: sixMonthsAgo }, 
+              }
+          },
+          {
+              $group: {
+                  _id: {
+                      year: { $year: "$createdAt" }, 
+                      month: { $month: "$createdAt" },
+                      type: "$type"
+                  },
+                  count: { $sum: 1 }
+              }
+          },
+          {
+              $group: {
+                  _id: { year: "$_id.year", month: "$_id.month" },
+                  publicCount: {
+                      $sum: { $cond: [{ $eq: ["$_id.type", "public"] }, "$count", 0] }
+                  },
+                  privateCount: {
+                      $sum: { $cond: [{ $eq: ["$_id.type", "private"] }, "$count", 0] }
+                  }
+              }
+          },
+          {
+              $sort: { "_id.year": 1, "_id.month": 1 }
+          }
+      ]);
+
+      return classroomCounts.map(item => ({
+          month: `${item._id.year}-${item._id.month.toString().padStart(2, "0")}`, // Format as YYYY-MM
+          publicCount: item.publicCount,
+          privateCount: item.privateCount
+      }));
+  } catch (error) {
+      console.error("Error fetching classroom counts per month:", error);
+      throw error;
+  }
+}
+
+
 }
 
 

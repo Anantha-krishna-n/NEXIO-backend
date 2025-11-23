@@ -259,7 +259,11 @@ export class authController {
   async updateUserDetails(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.userId; 
-      const { name, profilepic } = req.body;
+      const { name } = req.body;
+      const file = req.file;
+
+console.log(name,"name")
+console.log(file,"profile picture")
 
       if (!userId) {
         return res.status(HttpStatusCode.UNAUTHORIZED).json({ 
@@ -268,15 +272,24 @@ export class authController {
         });
       }
 
-      if (!name && !profilepic) {
-        return res.status(HttpStatusCode.BAD_REQUEST).json({
+      if (!userId) {
+        return res.status(HttpStatusCode.UNAUTHORIZED).json({
           success: false,
-          error: ErrorMessages.ALL_FIELDS_REQUIRED
+          error: ErrorMessages.UNAUTHORIZED,
         });
       }
       const updateData: { name?: string; profilepic?: string } = {};
       if (name) updateData.name = name;
-      if (profilepic) updateData.profilepic = profilepic;
+      if (file) updateData.profilepic = `/uploads/${file.filename}`; 
+
+
+
+      if (!name && !file) {
+        return res.status(HttpStatusCode.BAD_REQUEST).json({
+          success: false,
+          error: ErrorMessages.ALL_FIELDS_REQUIRED,
+        });
+      }
 
       const updatedUser = await this.authService.updateUserDetails(userId, updateData);
 

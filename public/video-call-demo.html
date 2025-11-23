@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Video Call - NEXIO</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        input {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            min-width: 200px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-join {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-leave {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-toggle {
+            background: #3b82f6;
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .video-container {
+            position: relative;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-label {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .status h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .status-item {
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        #localVideo {
+            transform: scaleX(-1);
+        }
+
+        .connecting {
+            border: 3px solid #fbbf24;
+        }
+
+        .connected {
+            border: 3px solid #10b981;
+        }
+
+        .error-message {
+            background: #ef4444;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 Group Video Call</h1>
+            <div class="controls">
+                <input type="text" id="classroomId" placeholder="Enter Classroom ID" value="test-room">
+                <button class="btn-join" id="joinBtn" onclick="joinCall()">Join Call</button>
+                <button class="btn-leave" id="leaveBtn" onclick="leaveCall()" disabled>Leave Call</button>
+                <button class="btn-toggle" id="toggleVideo" onclick="toggleVideo()" disabled>Toggle Video</button>
+                <button class="btn-toggle" id="toggleAudio" onclick="toggleAudio()" disabled>Toggle Audio</button>
+            </div>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="video-grid" id="videoGrid">
+            <!-- Videos will be added here dynamically -->
+        </div>
+
+        <div class="status">
+            <h3>📊 Connection Status</h3>
+            <div id="statusList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const ICE_SERVERS = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        // Global variables
+        let socket = null;
+        let localStream = null;
+        let currentClassroomId = null;
+        let peerConnections = new Map(); // Map of userId -> RTCPeerConnection
+        let isVideoEnabled = true;
+        let isAudioEnabled = true;
+
+        // Initialize Socket.IO connection
+        function initSocket() {
+            // Update this URL to match your backend server
+            socket = io('http://localhost:5000', {
+                transports: ['websocket', 'polling']
+            });
+
+            socket.on('connect', () => {
+                updateStatus('Socket', 'Connected ✅', 'connected');
+                console.log('Connected to server:', socket.id);
+            });
+
+            socket.on('disconnect', () => {
+                updateStatus('Socket', 'Disconnected ❌', 'error');
+                console.log('Disconnected from server');
+            });
+
+            // Handle existing users in the room
+            socket.on('existing-users', async (users) => {
+                console.log('Existing users:', users);
+                updateStatus('Room', `${users.length} users already in room`, 'info');
+                
+                // Create offer for each existing user
+                for (const userId of users) {
+                    await createPeerConnection(userId, true);
+                }
+            });
+
+            // Handle new user joining
+            socket.on('user-joined', async ({ userId }) => {
+                console.log('User joined:', userId);
+                updateStatus('Users', `User ${userId.substring(0, 8)} joined`, 'success');
+                
+                // Don't create offer, wait for the new user to send offers
+                await createPeerConnection(userId, false);
+            });
+
+            // Handle WebRTC offer
+            socket.on('webrtc-offer', async ({ offer, from }) => {
+                console.log('Received offer from:', from);
+                
+                let pc = peerConnections.get(from);
+                if (!pc) {
+                    pc = await createPeerConnection(from, false);
+                }
+
+                try {
+                    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+
+                    socket.emit('webrtc-answer', {
+                        classroomId: currentClassroomId,
+                        answer: answer,
+                        from: socket.id,
+                        to: from
+                    });
+
+                    console.log('Sent answer to:', from);
+                } catch (error) {
+                    console.error('Error handling offer:', error);
+                    showError('Error handling offer: ' + error.message);
+                }
+            });
+
+            // Handle WebRTC answer
+            socket.on('webrtc-answer', async ({ answer, from }) => {
+                console.log('Received answer from:', from);
+                
+                const pc = peerConnections.get(from);
+                if (pc) {
+                    try {
+                        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+                        console.log('Set remote description from:', from);
+                    } catch (error) {
+                        console.error('Error handling answer:', error);
+                        showError('Error handling answer: ' + error.message);
+                    }
+                }
+            });
+
+            // Handle ICE candidate
+            socket.on('webrtc-candidate', async ({ candidate, from }) => {
+                console.log('Received ICE candidate from:', from);
+                
+                const pc = peerConnections.get(from);
+                if (pc) {
+                    try {
+                        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                    } catch (error) {
+                        console.error('Error adding ICE candidate:', error);
+                    }
+                }
+            });
+
+            // Handle user leaving
+            socket.on('user-left', ({ userId }) => {
+                console.log('User left:', userId);
+                updateStatus('Users', `User ${userId.substring(0, 8)} left`, 'info');
+                removeUser(userId);
+            });
+        }
+
+        // Create peer connection for a user
+        async function createPeerConnection(userId, createOffer) {
+            console.log(`Creating peer connection for ${userId}, createOffer: ${createOffer}`);
+            
+            const pc = new RTCPeerConnection(ICE_SERVERS);
+            peerConnections.set(userId, pc);
+
+            // Add local stream to peer connection
+            if (localStream) {
+                localStream.getTracks().forEach(track => {
+                    pc.addTrack(track, localStream);
+                });
+            }
+
+            // Handle incoming remote stream
+            pc.ontrack = (event) => {
+                console.log('Received remote track from:', userId);
+                addRemoteVideo(userId, event.streams[0]);
+            };
+
+            // Handle ICE candidates
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('webrtc-candidate', {
+                        classroomId: currentClassroomId,
+                        candidate: event.candidate,
+                        from: socket.id,
+                        to: userId
+                    });
+                }
+            };
+
+            // Handle connection state changes
+            pc.onconnectionstatechange = () => {
+                console.log(`Connection state with ${userId}:`, pc.connectionState);
+                updateStatus(`Peer-${userId.substring(0, 8)}`, `State: ${pc.connectionState}`, 
+                    pc.connectionState === 'connected' ? 'connected' : 'connecting');
+                
+                if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+                    removeUser(userId);
+                }
+            };
+
+            // Create and send offer if this is an existing user
+            if (createOffer) {
+                try {
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+
+                    socket.emit('webrtc-offer', {
+                        classroomId: currentClassroomId,
+                        offer: offer,
+                        from: socket.id,
+                        to: userId
+                    });
+
+                    console.log('Sent offer to:', userId);
+                } catch (error) {
+                    console.error('Error creating offer:', error);
+                    showError('Error creating offer: ' + error.message);
+                }
+            }
+
+            return pc;
+        }
+
+        // Join video call
+        async function joinCall() {
+            const classroomId = document.getElementById('classroomId').value.trim();
+            
+            if (!classroomId) {
+                showError('Please enter a classroom ID');
+                return;
+            }
+
+            try {
+                // Get local media stream
+                updateStatus('Media', 'Requesting camera and microphone...', 'connecting');
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
+
+                updateStatus('Media', 'Camera and microphone access granted ✅', 'connected');
+
+                // Display local video
+                addLocalVideo(localStream);
+
+                // Initialize socket if not already done
+                if (!socket) {
+                    initSocket();
+                }
+
+                // Wait a bit for socket to connect
+                await new Promise(resolve => {
+                    if (socket.connected) {
+                        resolve();
+                    } else {
+                        socket.once('connect', resolve);
+                    }
+                });
+
+                // Join the classroom
+                currentClassroomId = classroomId;
+                socket.emit('join-video-call', classroomId);
+                
+                updateStatus('Room', `Joined room: ${classroomId}`, 'success');
+
+                // Update UI
+                document.getElementById('joinBtn').disabled = true;
+                document.getElementById('leaveBtn').disabled = false;
+                document.getElementById('toggleVideo').disabled = false;
+                document.getElementById('toggleAudio').disabled = false;
+                document.getElementById('classroomId').disabled = true;
+
+            } catch (error) {
+                console.error('Error joining call:', error);
+                showError('Failed to access camera/microphone: ' + error.message);
+                updateStatus('Error', error.message, 'error');
+            }
+        }
+
+        // Leave video call
+        function leaveCall() {
+            if (currentClassroomId) {
+                socket.emit('leave-video-call', currentClassroomId);
+            }
+
+            // Close all peer connections
+            peerConnections.forEach((pc, userId) => {
+                pc.close();
+            });
+            peerConnections.clear();
+
+            // Stop local stream
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+
+            // Clear video grid
+            document.getElementById('videoGrid').innerHTML = '';
+
+            // Update UI
+            document.getElementById('joinBtn').disabled = false;
+            document.getElementById('leaveBtn').disabled = true;
+            document.getElementById('toggleVideo').disabled = true;
+            document.getElementById('toggleAudio').disabled = true;
+            document.getElementById('classroomId').disabled = false;
+
+            currentClassroomId = null;
+            
+            updateStatus('Room', 'Left the call', 'info');
+            document.getElementById('statusList').innerHTML = '';
+        }
+
+        // Toggle video
+        function toggleVideo() {
+            if (localStream) {
+                const videoTrack = localStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    isVideoEnabled = !isVideoEnabled;
+                    videoTrack.enabled = isVideoEnabled;
+                    document.getElementById('toggleVideo').textContent = 
+                        isVideoEnabled ? 'Disable Video' : 'Enable Video';
+                    updateStatus('Video', isVideoEnabled ? 'Enabled' : 'Disabled', 'info');
+                }
+            }
+        }
+
+        // Toggle audio
+        function toggleAudio() {
+            if (localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    isAudioEnabled = !isAudioEnabled;
+                    audioTrack.enabled = isAudioEnabled;
+                    document.getElementById('toggleAudio').textContent = 
+                        isAudioEnabled ? 'Mute Audio' : 'Unmute Audio';
+                    updateStatus('Audio', isAudioEnabled ? 'Enabled' : 'Muted', 'info');
+                }
+            }
+        }
+
+        // Add local video to grid
+        function addLocalVideo(stream) {
+            const videoGrid = document.getElementById('videoGrid');
+            
+            const container = document.createElement('div');
+            container.className = 'video-container connected';
+            container.id = 'local-video-container';
+
+            const video = document.createElement('video');
+            video.id = 'localVideo';
+            video.srcObject = stream;
+            video.autoplay = true;
+            video.muted = true;
+            video.playsInline = true;
+
+            const label = document.createElement('div');
+            label.className = 'video-label';
+            label.textContent = 'You (Local)';
+
+            container.appendChild(video);
+            container.appendChild(label);
+            videoGrid.insertBefore(container, videoGrid.firstChild);
+        }
+
+        // Add remote video to grid
+        function addRemoteVideo(userId, stream) {
+            // Remove existing video if any
+            const existing = document.getElementById(`video-${userId}`);
+            if (existing) {
+                existing.remove();
+            }
+
+            const videoGrid = document.getElementById('videoGrid');
+            
+            const container = document.createElement('div');
+            container.className = 'video-container connected';
+            container.id = `video-${userId}`;
+
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.autoplay = true;
+            video.playsInline = true;
+
+            const label = document.createElement('div');
+            label.className = 'video-label';
+            label.textContent = `User ${userId.substring(0, 8)}`;
+
+            container.appendChild(video);
+            container.appendChild(label);
+            videoGrid.appendChild(container);
+
+            console.log('Added remote video for:', userId);
+        }
+
+        // Remove user video
+        function removeUser(userId) {
+            const videoElement = document.getElementById(`video-${userId}`);
+            if (videoElement) {
+                videoElement.remove();
+            }
+
+            const pc = peerConnections.get(userId);
+            if (pc) {
+                pc.close();
+                peerConnections.delete(userId);
+            }
+
+            // Remove status
+            const statusElement = document.getElementById(`status-${userId}`);
+            if (statusElement) {
+                statusElement.remove();
+            }
+        }
+
+        // Update status display
+        function updateStatus(category, message, type = 'info') {
+            const statusList = document.getElementById('statusList');
+            const statusId = `status-${category.replace(/\s/g, '-')}`;
+            
+            let statusItem = document.getElementById(statusId);
+            if (!statusItem) {
+                statusItem = document.createElement('div');
+                statusItem.id = statusId;
+                statusItem.className = 'status-item';
+                statusList.appendChild(statusItem);
+            }
+
+            statusItem.textContent = `${category}: ${message}`;
+            statusItem.style.background = 
+                type === 'connected' ? 'rgba(16, 185, 129, 0.3)' :
+                type === 'error' ? 'rgba(239, 68, 68, 0.3)' :
+                type === 'success' ? 'rgba(34, 197, 94, 0.3)' :
+                type === 'connecting' ? 'rgba(251, 191, 36, 0.3)' :
+                'rgba(255, 255, 255, 0.1)';
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            leaveCall();
+        });
+
+        // Initialize on page load
+        console.log('Video call demo loaded. Click "Join Call" to start.');
+    </script>
+</body>
+</html>

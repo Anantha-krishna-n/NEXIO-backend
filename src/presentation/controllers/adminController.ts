@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { UserRepository } from "../../infrastructure/repositories/UserRepository";
+import { ClassroomRepository } from "../../infrastructure/repositories/ClassroomRepository";
 import { IUserAuth } from "../../interfaces/repositories/IUserAuth";
 import bcrypt from "bcryptjs";
 
@@ -11,6 +12,7 @@ export const ADMIN_CREDENTIALS = {
     password: "Admin@123", 
   };
 const userRepository = new UserRepository();
+const classroomRepository=new ClassroomRepository();
 export class adminController{
   
     async adminLogin(req:Request,res:Response){
@@ -94,4 +96,14 @@ export class adminController{
           res.status(500).json({ error: "Failed to update user status" });
       }
   }
+  async getClassroomStats(req: Request, res: Response) {
+    try {
+        const stats = await classroomRepository.getClassroomCountsPerMonth();
+        res.status(200).json(stats);
+    } catch (error) {
+        console.error("Error fetching classroom statistics:", error);
+        res.status(500).json({ error: "Failed to fetch classroom statistics" });
+    }
+}
+
 }
