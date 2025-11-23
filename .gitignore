@@ -1,2 +1,8 @@
 node_modules/
 .env
+Dockerfile
+docker-compose.yml
+.dockerignore
+DOCKER_GUIDE.md
+DOCKER_README.md
+README_VIDEO_CALL.md
